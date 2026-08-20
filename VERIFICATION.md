@@ -26,19 +26,34 @@ stray strikethrough tildes, every `Text` binding data declares
 **Pill format, live, against the real feed:** the captured moment renders
 `ATL 1-0 · T4 · 2-2, 0 out`, asserted in the unit suite.
 
-## Proven on the Omarchy rig
+## Proven on the Omarchy rig (2026-08-20, during ATL @ CWS)
 
-Recorded here as each step lands; unchecked means not yet done.
+- [x] `omarchy-plugin-validate .` exit 0
+- [x] `qmllint BarWidget.qml Panel.qml` 0 errors, exit 0 (warnings are the
+      same import-path class the first-party widgets carry)
+- [x] Installed in a live bar (headless sway + Hyprland + quickshell);
+      pill rendered live: `ATL 1-0 · T5 · 1-2, 0 out`
+- [x] Panel opened during the game: line score with R H E, count, runner
+      on 2nd, batter and pitcher, last play prose, schedule, NL East race
+- [x] preview.png captured from that live render
+- [x] The live render caught and fixed a real boundary bug: the pill read
+      `3-3, 1 out` the instant a strikeout ended an at-bat (GUMBO keeps the
+      finished count until the next play); countText() now resets it 0-0
 
-- [ ] `omarchy-plugin-validate .` passes
-- [ ] `qmllint *.qml` clean of errors
-- [ ] Installed in a live bar; pill renders in all four states
-      (loading, countdown, live, final)
-- [ ] Panel opens with line score, bases, last play, schedule, standings
-      during a real game
-- [ ] preview.png captured from the live render
-- [ ] BYOK recap generated once against a real endpoint, then served from
-      cache
+## Proven against a real completion endpoint (2026-08-20)
+
+- [x] The exact curl argv Panel.qml builds, executed with the request body
+      from `recapRequestBody` and fixture-derived context, against a hosted
+      OpenAI-compatible API (Groq, openai/gpt-oss-120b): returned a
+      3-sentence storyline with the correct record, streak, loss, and next
+      opponent; `parseRecap` extracted and sanitized it.
+- [x] That run caught two real compatibility bugs first: 220 max_tokens
+      starved a reasoning model into `finish_reason: "length"` with empty
+      content (now 700), and typed content-part arrays parsed to nothing
+      (now joined).
+
+- [ ] Pill's countdown and final states rig-rendered (unit-tested only;
+      render them after a game day boundary)
 
 ## Honest boundary
 

@@ -405,12 +405,15 @@ function ordinal(n) {
   return n + "th"
 }
 
-// Request body for POST {base}/chat/completions. Kept small and cheap: one
-// short completion per game-state change.
+// Request body for POST {base}/chat/completions. One short completion per
+// game-state change. max_tokens leaves headroom for reasoning models that
+// spend tokens thinking before answering: proven live with 220 against a
+// hosted reasoning model, which returned finish_reason "length" and an
+// empty content field.
 function recapRequestBody(model, context) {
   return JSON.stringify({
     model: String(model || ""),
-    max_tokens: 220,
+    max_tokens: 700,
     temperature: 0.7,
     messages: [
       {
@@ -424,13 +427,22 @@ function recapRequestBody(model, context) {
   })
 }
 
-// choices[0].message.content, sanitized and capped. Anything malformed
-// returns "" and the panel simply shows no recap section.
+// choices[0].message.content, sanitized and capped. Some OpenAI-compatible
+// servers return content as an array of typed parts; join the text parts.
+// Anything malformed returns "" and the panel simply shows no recap section.
 function parseRecap(raw) {
   var data
   try { data = JSON.parse(String(raw || "")) } catch (e) { return "" }
   var c = data && data.choices && data.choices[0]
   var content = c && c.message ? c.message.content : ""
+  if (content && content.length !== undefined && typeof content !== "string") {
+    var parts = []
+    for (var i = 0; i < content.length; i++) {
+      var p = content[i]
+      if (p && typeof p.text === "string") parts.push(p.text)
+    }
+    content = parts.join(" ")
+  }
   return clean(content, 600)
 }
 

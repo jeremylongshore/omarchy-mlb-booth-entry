@@ -257,9 +257,18 @@ test("recapContext states record, last result, and next game as plain facts", ()
 test("recapRequestBody is valid JSON with bounded output and the facts inline", () => {
   const body = JSON.parse(Model.recapRequestBody("gpt-4o-mini", "Team: Atlanta Braves"))
   assert.equal(body.model, "gpt-4o-mini")
-  assert.ok(body.max_tokens <= 300)
+  // Bounded, with headroom for reasoning models that think before answering
+  // (proven live: 220 starved one into finish_reason "length", empty content).
+  assert.ok(body.max_tokens >= 500 && body.max_tokens <= 1000)
   assert.equal(body.messages.length, 2)
   assert.match(body.messages[1].content, /Atlanta Braves/)
+})
+
+test("parseRecap joins typed content-part arrays some servers return", () => {
+  const raw = JSON.stringify({
+    choices: [{ message: { content: [{ type: "text", text: "First." }, { type: "text", text: "Second." }] } }]
+  })
+  assert.equal(Model.parseRecap(raw), "First. Second.")
 })
 
 test("parseRecap extracts the completion and sanitizes it", () => {
