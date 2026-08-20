@@ -140,11 +140,13 @@ test("parseGumbo surfaces the last completed play, not the in-progress at-bat", 
   assert.match(g.lastPlay, /grounds out/)
 })
 
-test("parseGumbo maps innings and marks the unplayed half as -1", () => {
+test("parseGumbo maps innings: batting half is a 0 in progress, unreached half stays -1", () => {
   const g = Model.parseGumbo(gumboRaw)
   assert.equal(g.innings.length, 4)
   assert.deepEqual(g.innings[2], { n: 3, away: 1, home: 0 })
-  assert.equal(g.innings[3].away, -1)
+  // Capture moment is Top 4: ATL batting (0 so far), CWS half not reached.
+  assert.equal(g.innings[3].away, 0)
+  assert.equal(g.innings[3].home, -1)
 })
 
 test("parseGumbo rejects malformed input", () => {
@@ -238,9 +240,9 @@ test("parseStandings returns the empty shape on malformed input", () => {
 test("recapCacheKey changes per game, not per refresh", () => {
   const games = Model.parseSchedule(scheduleRaw, ATL)
   const finalState = { status: "final", game: games.find((g) => g.gamePk === 823664) }
-  assert.equal(Model.recapCacheKey(finalState, ATL), "final:823664")
-  assert.equal(Model.recapCacheKey({ status: "live", game: games[0] }, ATL), "live")
-  assert.equal(Model.recapCacheKey({ status: "off" }, ATL), "off")
+  assert.equal(Model.recapCacheKey(finalState), "final:823664")
+  assert.equal(Model.recapCacheKey({ status: "live", game: games[0] }), "live")
+  assert.equal(Model.recapCacheKey({ status: "off" }), "off")
 })
 
 test("recapContext states record, last result, and next game as plain facts", () => {
@@ -281,4 +283,150 @@ test("parseRecap extracts the completion and sanitizes it", () => {
 test("parseRecap returns empty string on malformed input", () => {
   assert.equal(Model.parseRecap("not json"), "")
   assert.equal(Model.parseRecap("{}"), "")
+})
+
+// ---- Status shapes statsapi rarely serves: synthesized from the documented
+//      status codes, because no capture window reliably contains them.
+
+const mkGame = (over) => Object.assign({
+  gamePk: 900001,
+  startMs: DURING_GAME_MS - 3600000,
+  state: "pre",
+  detail: "Scheduled",
+  home: { id: 145, abbr: "CWS", name: "White Sox", score: -1 },
+  away: { id: 144, abbr: "ATL", name: "Braves", score: -1 },
+  isHome: false
+}, over)
+
+test("a postponed game is its own state and never a phantom 0-0 final", () => {
+  const raw = JSON.stringify({ dates: [{ games: [{
+    gamePk: 900002, gameDate: "2026-08-20T18:10:00Z",
+    status: { abstractGameState: "Final", detailedState: "Postponed" },
+    teams: {
+      home: { team: { id: 145, abbreviation: "CWS", teamName: "White Sox" } },
+      away: { team: { id: 144, abbreviation: "ATL", teamName: "Braves" } }
+    }
+  }] }] })
+  const games = Model.parseSchedule(raw, ATL)
+  assert.equal(games[0].state, "postponed")
+  // Alone in the window it yields off, not "ATL T 0-0".
+  assert.deepEqual(Model.currentOrNext(games, DURING_GAME_MS), { status: "off" })
+})
+
+test("a postponed game cannot shadow a real final in the postgame window", () => {
+  const real = mkGame({ gamePk: 900003, startMs: DURING_GAME_MS - 5 * 3600000, state: "final",
+    home: { id: 145, abbr: "CWS", name: "White Sox", score: 6 },
+    away: { id: 144, abbr: "ATL", name: "Braves", score: 4 } })
+  const post = mkGame({ gamePk: 900004, startMs: DURING_GAME_MS - 3600000, state: "postponed" })
+  const state = Model.currentOrNext([real, post], DURING_GAME_MS)
+  assert.equal(state.status, "final")
+  assert.equal(state.game.gamePk, 900003)
+})
+
+test("a suspended game maps to postponed, not to a wedged live state", () => {
+  const raw = JSON.stringify({ dates: [{ games: [{
+    gamePk: 900005, gameDate: "2026-08-20T18:10:00Z",
+    status: { abstractGameState: "Live", detailedState: "Suspended: Rain" },
+    teams: {
+      home: { team: { id: 145, abbreviation: "CWS", teamName: "White Sox" } },
+      away: { team: { id: 144, abbreviation: "ATL", teamName: "Braves" } }
+    }
+  }] }] })
+  const games = Model.parseSchedule(raw, ATL)
+  assert.equal(games[0].state, "postponed")
+  assert.notEqual(Model.currentOrNext(games, DURING_GAME_MS).status, "live")
+})
+
+test("a delayed start holds the pill: still Preview past first pitch stays next", () => {
+  const delayed = mkGame({ detail: "Delayed Start: Rain", startMs: DURING_GAME_MS - 80 * 60000 })
+  const state = Model.currentOrNext([delayed], DURING_GAME_MS)
+  assert.equal(state.status, "next")
+  assert.ok(state.msUntil < 0)
+  // The pill renders "now" rather than a negative countdown.
+  assert.equal(Model.pillText(state, ATL, null), "ATL @ CWS now")
+})
+
+test("split doubleheader: game 1's result holds the pill until game 2 is closer", () => {
+  const g1 = mkGame({ gamePk: 900006, startMs: DURING_GAME_MS - 3.5 * 3600000, state: "final",
+    home: { id: 145, abbr: "CWS", name: "White Sox", score: 2 },
+    away: { id: 144, abbr: "ATL", name: "Braves", score: 5 } })
+  const g2 = mkGame({ gamePk: 900007, startMs: DURING_GAME_MS + 2.5 * 3600000 })
+  // Just after game 1's final out (start + ~3.25h): age is ~0, game 2 is
+  // 2.5h away. The old first-pitch-age math skipped the result entirely.
+  const state = Model.currentOrNext([g1, g2], DURING_GAME_MS)
+  assert.equal(state.status, "final")
+  assert.equal(state.game.gamePk, 900006)
+  assert.equal(Model.pillText(state, ATL, null), "ATL W 5-2")
+})
+
+test("pillText renders vs for a home game and @ for a road game", () => {
+  const road = { status: "next", game: mkGame({}), msUntil: 65 * 60000 }
+  assert.equal(Model.pillText(road, ATL, null), "ATL @ CWS 1h 05m")
+  const home = { status: "next", game: mkGame({ isHome: true,
+    home: { id: 144, abbr: "ATL", name: "Braves", score: -1 },
+    away: { id: 145, abbr: "CWS", name: "White Sox", score: -1 } }), msUntil: 65 * 60000 }
+  assert.equal(Model.pillText(home, ATL, null), "ATL vs CWS 1h 05m")
+})
+
+test("recapContext reports a tie as tied, never as a loss", () => {
+  const tied = { status: "final", game: mkGame({ state: "final",
+    home: { id: 145, abbr: "CWS", name: "White Sox", score: 3 },
+    away: { id: 144, abbr: "ATL", name: "Braves", score: 3 } }) }
+  const ctx = Model.recapContext("ATL", tied, { division: "", rows: [] }, [], DURING_GAME_MS)
+  assert.match(ctx, /tied White Sox 3-3/)
+})
+
+test("parseGumbo caps a hostile innings list at 30", () => {
+  const innings = []
+  for (let i = 0; i < 5000; i++) innings.push({ num: i + 1, away: { runs: 0 }, home: { runs: 0 } })
+  const raw = JSON.stringify({
+    gameData: { status: { abstractGameState: "Live" }, teams: {} },
+    liveData: { linescore: { innings }, plays: {} }
+  })
+  assert.equal(Model.parseGumbo(raw).innings.length, 30)
+})
+
+test("parseGumbo blanks the matchup at the end-of-at-bat boundary", () => {
+  const raw = JSON.stringify({
+    gameData: { status: { abstractGameState: "Live" }, teams: {} },
+    liveData: {
+      linescore: { currentInning: 5, inningState: "Top" },
+      plays: { currentPlay: {
+        about: { isComplete: true },
+        count: { balls: 3, strikes: 3, outs: 1 },
+        matchup: { batter: { fullName: "Gone Batter" }, pitcher: { fullName: "Some Pitcher" } }
+      }, allPlays: [] }
+    }
+  })
+  const g = Model.parseGumbo(raw)
+  assert.equal(g.batter, "")
+  assert.equal(g.pitcher, "")
+})
+
+test("emptyGumbo carries every field a binding touches, so nothing is ever undefined", () => {
+  const g = Model.emptyGumbo()
+  for (const k of ["awayAbbr", "homeAbbr", "inningState", "batter", "pitcher", "lastPlay"])
+    assert.equal(typeof g[k], "string")
+  for (const k of ["awayRuns", "homeRuns", "awayHits", "homeHits", "awayErrors", "homeErrors", "inning", "balls", "strikes", "outs"])
+    assert.equal(typeof g[k], "number")
+  assert.deepEqual(g.bases, { first: false, second: false, third: false })
+  assert.deepEqual(g.innings, [])
+  assert.equal(g.valid, false)
+})
+
+test("clean strips bidi overrides and Unicode tag characters", () => {
+  assert.equal(Model.clean("safe‮gnp.exe"), "safegnp.exe")
+  assert.equal(Model.clean("tag󠁡󠁢ged"), "tagged")
+})
+
+test("parsers reject a body past the in-process size bound", () => {
+  const huge = '{"dates": []}' + " ".repeat(4000001)
+  assert.deepEqual(Model.parseSchedule(huge, ATL), [])
+  assert.equal(Model.parseGumbo(huge).valid, false)
+})
+
+test("the manifest team picker cannot drift from the team table", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "manifest.json"), "utf8"))
+  const field = manifest.barWidget.schema.find((f) => f.key === "team")
+  assert.deepEqual(field.options, Model.teamAbbrs())
 })

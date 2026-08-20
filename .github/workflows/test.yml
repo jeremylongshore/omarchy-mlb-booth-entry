@@ -1,9 +1,32 @@
 name: test
 on:
   push:
+    branches: [main]
   pull_request:
+
 jobs:
-  unit:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: JS syntax check (every .js file)
+        run: |
+          for f in $(git ls-files '*.js'); do node --check "$f"; done
+      - name: manifest.json is valid and carries the required fields
+        run: |
+          jq -e '.schemaVersion == 1' manifest.json
+          jq -e '.id | test("^io\\.github\\.jeremylongshore\\.")' manifest.json
+          for field in id name version kinds entryPoints author license description; do
+            jq -e --arg f "$field" 'has($f)' manifest.json > /dev/null || { echo "missing $field"; exit 1; }
+          done
+      - name: no symlinks in the plugin tree
+        run: |
+          test -z "$(find . -type l -not -path './.git/*')"
+
+  model-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

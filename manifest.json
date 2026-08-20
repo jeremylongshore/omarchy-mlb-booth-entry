@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "author": "Jeremy Longshore",
   "license": "MIT",
-  "description": "Deep live MLB game for the Omarchy bar. Pick any of the 30 clubs; the pill carries score, half inning, count, and outs from the same GUMBO feed the broadcast booth reads. Free, keyless data from the MLB Stats API.",
+  "description": "Deep live MLB for the Omarchy bar. Pick any of the 30 clubs; the pill carries score, half inning, count, and outs from the same GUMBO feed MLB's own Gameday runs on. Free, keyless data from the MLB Stats API.",
   "kinds": [
     "bar-widget"
   ],
@@ -14,7 +14,7 @@
   },
   "barWidget": {
     "displayName": "MLB Booth",
-    "description": "Bar pill counts down to first pitch, then goes live: score, half inning, count, and outs, updated every 20 seconds. The panel carries the line score, bases and matchup, last play, the week's schedule in your local time, and the division race. Optional: point three settings at any OpenAI-compatible endpoint and The Booth writes a short storyline between games; the widget is complete without it.",
+    "description": "Counts down to first pitch, then goes live: score, half inning, count, and outs, refreshed every 20 seconds. The panel adds the line score, bases, matchup, last play, the week's schedule, and the division race.",
     "category": "Info",
     "aliases": [
       "mlb",
@@ -40,26 +40,6 @@
           "PHI", "PIT", "SD", "SEA", "SF", "STL", "TB", "TEX", "TOR", "WSH"
         ],
         "defaultValue": "ATL"
-      },
-      {
-        "key": "aiBaseUrl",
-        "type": "string",
-        "label": "AI recap base URL (optional)",
-        "defaultValue": "",
-        "description": "OpenAI-compatible API base, e.g. https://api.openai.com/v1. Leave empty to keep the widget fully keyless."
-      },
-      {
-        "key": "aiModel",
-        "type": "string",
-        "label": "AI recap model (optional)",
-        "defaultValue": ""
-      },
-      {
-        "key": "aiApiKey",
-        "type": "string",
-        "label": "AI recap API key (optional)",
-        "defaultValue": "",
-        "description": "Stored in your local shell settings. Only ever sent to the base URL you set above, and only between games."
       }
     ]
   }

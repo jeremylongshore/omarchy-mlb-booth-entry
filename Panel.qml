@@ -19,7 +19,6 @@ Panel {
   manageIpc: false
 
   property var anchorItem: null
-  property bool openedFromHotkey: false
 
   // The bar identifies this plugin by the widget mounted in its slot, not by
   // this nested panel.
@@ -33,7 +32,10 @@ Panel {
   readonly property string aiBaseUrl: String(setting("aiBaseUrl", ""))
   readonly property string aiModel: String(setting("aiModel", ""))
   readonly property string aiApiKey: String(setting("aiApiKey", ""))
-  readonly property bool aiEnabled: aiBaseUrl !== "" && aiModel !== "" && aiApiKey !== ""
+  // https only: curl would happily take file:// or a dash-prefixed value it
+  // parses as an option, and the key must never ride cleartext http.
+  readonly property bool aiUrlOk: /^https:\/\/\S+$/.test(aiBaseUrl)
+  readonly property bool aiEnabled: aiUrlOk && aiModel !== "" && aiApiKey !== ""
 
   // ---- Fixed behavior. Omakase constants, not knobs.
   readonly property int refreshSec: 900        // schedule + standings cadence
@@ -42,13 +44,11 @@ Panel {
   readonly property int standingsRowsMax: 5    // division table rows
 
   function open() {
-    openedFromHotkey = false
     root.controller.show()
     root.refresh()
   }
 
   function openFromHotkey() {
-    openedFromHotkey = true
     root.controller.show()
     root.refresh()
   }
@@ -62,6 +62,13 @@ Panel {
     else root.openFromHotkey()
   }
 
+  // Popout-switch contract the BarWidget host routes to. Nothing here needs
+  // special close behavior, so a switch is just a close.
+  property bool popoutSwitchClosing: false
+  function closeForPopoutSwitch() {
+    root.close()
+  }
+
   function switchPanel(direction) {
     if (root.bar && typeof root.bar.switchPanelFrom === "function")
       return root.bar.switchPanelFrom(root.barIdentity, direction)
@@ -73,9 +80,18 @@ Panel {
   property var games: []
   property bool scheduleLoaded: false
   property var standings: ({ division: "", rows: [] })
-  property var gumbo: ({ valid: false })
+  property var gumbo: Model.emptyGumbo()
+  // Which gamePk the current gumbo object belongs to — a doubleheader can
+  // flip games without isLive ever dipping false.
+  property int gumboPk: 0
   property string recapText: ""
+  // Key of the situation recapText describes; a fetch in flight carries its
+  // own key so a failed generation retries on the next refresh instead of
+  // being skipped forever.
   property string recapShownKey: ""
+  property string recapPendingKey: ""
+  // One forced schedule refresh per game when GUMBO calls Final first.
+  property int finalRefreshedPk: 0
 
   // Re-evaluated every 30s so the countdown ticks without any fetch.
   property double nowMs: Date.now()
@@ -85,22 +101,22 @@ Panel {
   // BarWidget lights the pill from this (template contract name).
   readonly property bool isAlert: isLive
 
-  // Bar pill. Never silently vanishes: the ball glyph is always present so an
-  // unreachable API reads as "loading", not "widget gone".
-  //   loading            : "󰡒 …"
-  //   pregame            : "󰡒 ATL @ CWS 1h 05m"
-  //   live               : "󰡒 ATL 1-0 · T4 · 2-2, 0 out"
-  //   postgame           : "󰡒 ATL W 4-2"
+  // Bar pill. Never silently vanishes: while loading it shows an ellipsis so
+  // an unreachable API reads as "loading", not "widget gone".
+  //   loading            : "…"
+  //   pregame            : "ATL @ CWS 1h 05m"  (or "… now" in a rain delay)
+  //   live               : "ATL 1-0 · T4 · 2-2, 0 out"
+  //   postgame           : "ATL W 4-2"
   //   nothing in 8 days  : ""  (legitimately quiet; slot collapses)
   readonly property string label: {
-    if (!scheduleLoaded) return "󰡒 …"
+    if (!scheduleLoaded) return "…"
     if (gameState.status === "off") return ""
-    return "󰡒 " + Model.pillText(gameState, myTeamId, gumbo)
+    return Model.pillText(gameState, myTeamId, gumbo)
   }
 
   readonly property string tooltip: {
-    if (!scheduleLoaded) return "MLB Booth — loading schedule…"
-    if (gameState.status === "off") return "MLB Booth — no games in the next week"
+    if (!scheduleLoaded) return "MLB Booth · loading schedule…"
+    if (gameState.status === "off") return "MLB Booth · no games in the next week"
     var s = Model.scorePair(gameState, myTeamId)
     var vs = gameState.game.isHome ? " vs " : " at "
     if (isLive) return s.mine.name + vs + s.theirs.name + " · LIVE"
@@ -109,13 +125,25 @@ Panel {
       + Qt.formatDateTime(new Date(gameState.game.startMs), "ddd d MMM · HH:mm")
   }
 
+  onMyTeamIdChanged: {
+    games = []
+    scheduleLoaded = false
+    standings = ({ division: "", rows: [] })
+    gumbo = Model.emptyGumbo()
+    gumboPk = 0
+    recapText = ""
+    recapShownKey = ""
+    recapPendingKey = ""
+    refresh()
+  }
+
   function refresh() {
     var d0 = new Date(nowMs - 86400000).toISOString().slice(0, 10)
     var d1 = new Date(nowMs + 7 * 86400000).toISOString().slice(0, 10)
     scheduleProc.command = curl("https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId="
       + myTeamId + "&hydrate=team,linescore&startDate=" + d0 + "&endDate=" + d1)
     if (!scheduleProc.running) scheduleProc.running = true
-    var season = new Date(nowMs).getFullYear()
+    var season = new Date(nowMs).toISOString().slice(0, 4)
     standingsProc.command = curl("https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=" + season)
     if (!standingsProc.running) standingsProc.running = true
   }
@@ -125,7 +153,13 @@ Panel {
   //      body can never freeze the shell's UI thread on JSON.parse.
   function liveTick() {
     nowMs = Date.now()
-    if (!isLive || !gameState.game.gamePk) return
+    if (!isLive || !(gameState.game.gamePk > 0)) return
+    if (gameState.game.gamePk !== gumboPk) {
+      // Game 2 of a doubleheader: never render game 1's innings under the
+      // new game's header while the first fresh poll is still in flight.
+      gumbo = Model.emptyGumbo()
+      gumboPk = gameState.game.gamePk
+    }
     if (!gumboProc.running) {
       gumboProc.command = curl("https://statsapi.mlb.com/api/v1.1/game/"
         + gameState.game.gamePk + "/feed/live")
@@ -137,14 +171,14 @@ Panel {
   // hundred KB and grows through a game); curl exits non-zero past the cap,
   // the collector gets nothing, and the parser keeps last-good.
   function curl(url) {
-    return ["curl", "-fsS", "--max-time", "15", "--max-filesize", "8000000", url]
+    return ["curl", "-fsS", "--max-time", "15", "--max-filesize", "4000000", "--", url]
   }
 
   onIsLiveChanged: {
     if (!isLive) {
       // Game over: drop the live view so the next game starts clean, then
       // let the recap fill the dead air.
-      gumbo = ({ valid: false })
+      gumbo = Model.emptyGumbo()
       maybeRecap()
     }
   }
@@ -154,18 +188,28 @@ Panel {
   //      without it.
   function maybeRecap() {
     if (!aiEnabled || isLive || !scheduleLoaded) return
-    var key = Model.recapCacheKey(gameState, myTeamId)
+    var key = Model.recapCacheKey(gameState)
+    // A recap for a gone situation must not linger under the new one.
+    if (recapText !== "" && recapShownKey !== key) recapText = ""
     if (key === "off" || key === "live" || key === recapShownKey) return
     if (recapProc.running) return
-    recapShownKey = key
+    // Wait for the record before writing the storyline; a recap generated
+    // without standings caches thin and never regenerates.
+    if (standings.rows.length === 0) return
+    recapPendingKey = key
     var context = Model.recapContext(teamAbbr, gameState, standings, games, nowMs)
     var body = Model.recapRequestBody(aiModel, context)
     var url = aiBaseUrl.replace(/\/+$/, "") + "/chat/completions"
+    // --proto =https and the -- terminator pin curl to the one thing the
+    // manifest promises: an https POST to the configured base URL. Without
+    // the terminator a dash-prefixed base URL would parse as curl OPTIONS
+    // (-o writes files, -K loads a config); aiUrlOk already rejects those,
+    // and this makes the argv safe even if that check ever regresses.
     recapProc.command = [
-      "curl", "-fsS", "--max-time", "30", "--max-filesize", "1000000",
+      "curl", "-fsS", "--proto", "=https", "--max-time", "30", "--max-filesize", "1000000",
       "-H", "Content-Type: application/json",
       "-H", "Authorization: Bearer " + aiApiKey,
-      "-d", body, url
+      "-d", body, "--", url
     ]
     recapProc.running = true
   }
@@ -191,7 +235,10 @@ Panel {
       waitForEnd: true
       onStreamFinished: {
         var parsed = Model.parseStandings(text, root.myTeamId)
-        if (parsed.rows.length) root.standings = parsed
+        if (parsed.rows.length) {
+          root.standings = parsed
+          root.maybeRecap()
+        }
       }
     }
   }
@@ -204,8 +251,13 @@ Panel {
         var parsed = Model.parseGumbo(text)
         if (parsed.valid) {
           root.gumbo = parsed
-          // GUMBO knows the game ended before the slow schedule refresh does.
-          if (parsed.state === "Final") root.refresh()
+          // GUMBO knows the game ended before the slow schedule refresh
+          // does; refresh once per game, not on every 20s poll until the
+          // schedule catches up.
+          if (parsed.state === "Final" && root.finalRefreshedPk !== root.gumboPk) {
+            root.finalRefreshedPk = root.gumboPk
+            root.refresh()
+          }
         }
       }
     }
@@ -217,7 +269,13 @@ Panel {
       waitForEnd: true
       onStreamFinished: {
         var textOut = Model.parseRecap(text)
-        if (textOut !== "") root.recapText = textOut
+        if (textOut !== "") {
+          root.recapText = textOut
+          root.recapShownKey = root.recapPendingKey
+        }
+        // On failure recapShownKey stays unset for this key, so the next
+        // 15-minute refresh retries instead of skipping the game forever.
+        root.recapPendingKey = ""
       }
     }
   }
@@ -325,7 +383,7 @@ Panel {
                 visible: !root.scheduleLoaded || root.gameState.status !== "off"
                 text: {
                   if (!root.scheduleLoaded) return "Fetching schedule from the MLB Stats API…"
-                  if (root.gameState.status === "final") return root.gameState.game.detail.toUpperCase()
+                  if (root.gameState.status === "off") return ""
                   return root.gameState.game.detail.toUpperCase()
                 }
                 textFormat: Text.PlainText
@@ -362,7 +420,9 @@ Panel {
                 Text {
                   text: {
                     if (root.gameState.status === "next")
-                      return "First pitch in " + Model.countdown(root.gameState.msUntil)
+                      return root.gameState.msUntil <= 30000
+                        ? root.gameState.game.detail
+                        : "First pitch in " + Model.countdown(root.gameState.msUntil)
                     if (root.gameState.status === "final") {
                       var s = Model.scorePair(root.gameState, root.myTeamId)
                       return "FINAL " + Math.max(0, s.mine.score) + "-" + Math.max(0, s.theirs.score)
@@ -413,9 +473,7 @@ Panel {
                   font.pixelSize: Style.font.bodySmall
                 }
                 Text {
-                  // "||""" keeps the binding a QString before the first GUMBO
-                  // poll fills the object (undefined logs a scene warning).
-                  text: root.gumbo.awayAbbr || ""
+                  text: root.gumbo.awayAbbr
                   textFormat: Text.PlainText
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
@@ -423,7 +481,7 @@ Panel {
                   font.bold: true
                 }
                 Text {
-                  text: root.gumbo.homeAbbr || ""
+                  text: root.gumbo.homeAbbr
                   textFormat: Text.PlainText
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
@@ -432,8 +490,12 @@ Panel {
                 }
               }
 
+              // A game past nine innings shows its trailing nine; the panel is
+              // a scorecard, not a scroll, and R H E must never leave the frame.
               Repeater {
-                model: root.gumbo.innings
+                model: root.gumbo.innings.length > 9
+                  ? root.gumbo.innings.slice(root.gumbo.innings.length - 9)
+                  : root.gumbo.innings
 
                 Column {
                   required property var modelData
@@ -653,18 +715,32 @@ Panel {
                   width: parent.width - Style.space(140)
                 }
 
+                // Two right-anchored columns: every record lines up, and the
+                // games-back slot is fixed-width so the leader simply leaves
+                // it empty instead of shifting its record sideways.
                 Text {
                   anchors.right: parent.right
-                  anchors.rightMargin: Style.space(16)
+                  anchors.rightMargin: Style.space(16) + Style.space(64)
                   anchors.verticalCenter: parent.verticalCenter
-                  // Leader shows the bare record; the pack shows games back.
                   text: modelData.wins + "-" + modelData.losses
-                    + (modelData.gb === "-" ? "" : "  " + modelData.gb + " back")
                   textFormat: Text.PlainText
                   color: root.bar ? Qt.darker(root.bar.foreground, isMine ? 1.0 : 1.3) : Color.muted
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
                   font.bold: isMine
+                }
+
+                Text {
+                  anchors.right: parent.right
+                  anchors.rightMargin: Style.space(16)
+                  anchors.verticalCenter: parent.verticalCenter
+                  width: Style.space(60)
+                  horizontalAlignment: Text.AlignRight
+                  text: modelData.gb === "-" ? "" : modelData.gb + " back"
+                  textFormat: Text.PlainText
+                  color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Color.muted
+                  font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                  font.pixelSize: Style.font.bodySmall
                 }
               }
             }

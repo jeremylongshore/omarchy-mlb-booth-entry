@@ -6,38 +6,39 @@
 
 // The 30 clubs, keyed by statsapi abbreviation. Fixed data: ids and
 // abbreviations are stable season over season, and shipping them beats a
-// fourth network fetch just to fill the team picker.
+// fourth network fetch just to fill the team picker. A unit test pins this
+// table against manifest.json's picker options so the two cannot drift.
 var TEAMS = {
-  ATH: { id: 133, div: 200, name: "Athletics" },
-  ATL: { id: 144, div: 204, name: "Atlanta Braves" },
-  AZ:  { id: 109, div: 203, name: "Arizona Diamondbacks" },
-  BAL: { id: 110, div: 201, name: "Baltimore Orioles" },
-  BOS: { id: 111, div: 201, name: "Boston Red Sox" },
-  CHC: { id: 112, div: 205, name: "Chicago Cubs" },
-  CIN: { id: 113, div: 205, name: "Cincinnati Reds" },
-  CLE: { id: 114, div: 202, name: "Cleveland Guardians" },
-  COL: { id: 115, div: 203, name: "Colorado Rockies" },
-  CWS: { id: 145, div: 202, name: "Chicago White Sox" },
-  DET: { id: 116, div: 202, name: "Detroit Tigers" },
-  HOU: { id: 117, div: 200, name: "Houston Astros" },
-  KC:  { id: 118, div: 202, name: "Kansas City Royals" },
-  LAA: { id: 108, div: 200, name: "Los Angeles Angels" },
-  LAD: { id: 119, div: 203, name: "Los Angeles Dodgers" },
-  MIA: { id: 146, div: 204, name: "Miami Marlins" },
-  MIL: { id: 158, div: 205, name: "Milwaukee Brewers" },
-  MIN: { id: 142, div: 202, name: "Minnesota Twins" },
-  NYM: { id: 121, div: 204, name: "New York Mets" },
-  NYY: { id: 147, div: 201, name: "New York Yankees" },
-  PHI: { id: 143, div: 204, name: "Philadelphia Phillies" },
-  PIT: { id: 134, div: 205, name: "Pittsburgh Pirates" },
-  SD:  { id: 135, div: 203, name: "San Diego Padres" },
-  SEA: { id: 136, div: 200, name: "Seattle Mariners" },
-  SF:  { id: 137, div: 203, name: "San Francisco Giants" },
-  STL: { id: 138, div: 205, name: "St. Louis Cardinals" },
-  TB:  { id: 139, div: 201, name: "Tampa Bay Rays" },
-  TEX: { id: 140, div: 200, name: "Texas Rangers" },
-  TOR: { id: 141, div: 201, name: "Toronto Blue Jays" },
-  WSH: { id: 120, div: 204, name: "Washington Nationals" }
+  ATH: { id: 133, name: "Athletics" },
+  ATL: { id: 144, name: "Atlanta Braves" },
+  AZ:  { id: 109, name: "Arizona Diamondbacks" },
+  BAL: { id: 110, name: "Baltimore Orioles" },
+  BOS: { id: 111, name: "Boston Red Sox" },
+  CHC: { id: 112, name: "Chicago Cubs" },
+  CIN: { id: 113, name: "Cincinnati Reds" },
+  CLE: { id: 114, name: "Cleveland Guardians" },
+  COL: { id: 115, name: "Colorado Rockies" },
+  CWS: { id: 145, name: "Chicago White Sox" },
+  DET: { id: 116, name: "Detroit Tigers" },
+  HOU: { id: 117, name: "Houston Astros" },
+  KC:  { id: 118, name: "Kansas City Royals" },
+  LAA: { id: 108, name: "Los Angeles Angels" },
+  LAD: { id: 119, name: "Los Angeles Dodgers" },
+  MIA: { id: 146, name: "Miami Marlins" },
+  MIL: { id: 158, name: "Milwaukee Brewers" },
+  MIN: { id: 142, name: "Minnesota Twins" },
+  NYM: { id: 121, name: "New York Mets" },
+  NYY: { id: 147, name: "New York Yankees" },
+  PHI: { id: 143, name: "Philadelphia Phillies" },
+  PIT: { id: 134, name: "Pittsburgh Pirates" },
+  SD:  { id: 135, name: "San Diego Padres" },
+  SEA: { id: 136, name: "Seattle Mariners" },
+  SF:  { id: 137, name: "San Francisco Giants" },
+  STL: { id: 138, name: "St. Louis Cardinals" },
+  TB:  { id: 139, name: "Tampa Bay Rays" },
+  TEX: { id: 140, name: "Texas Rangers" },
+  TOR: { id: 141, name: "Toronto Blue Jays" },
+  WSH: { id: 120, name: "Washington Nationals" }
 }
 
 var DIVISIONS = {
@@ -48,6 +49,12 @@ var DIVISIONS = {
   204: "NL East",
   205: "NL Central"
 }
+
+// A response bigger than this is not a baseball feed. The curl argv carries
+// the same number as --max-filesize, but that flag is only reliable when the
+// server sends Content-Length (and only for HTTP), so the real bound lives
+// here, in-process, before JSON.parse runs on the shell's UI thread.
+var MAX_BODY_CHARS = 4000000
 
 function teamAbbrs() {
   var out = []
@@ -61,32 +68,44 @@ function teamId(abbr) {
   return t ? t.id : 0
 }
 
-function teamDivision(abbr) {
-  var t = TEAMS[String(abbr || "").toUpperCase()]
-  return t ? t.div : 0
-}
-
-// Sanitize every string that comes from the API before it reaches a QML
-// Text. Two reasons: (1) a first-party bar label renders as Qt AutoText,
-// which promotes an HTML-looking string to StyledText — an `<img src=...>`
-// in a name or play description would make the shell process fetch a URL;
-// stripping angle brackets defuses that. (2) A pathologically long field is
-// a layout-cost problem, so cap it.
+// Sanitize every string that comes from the network before it reaches a QML
+// Text. Strips: angle brackets (a first-party bar label renders as Qt
+// AutoText, which promotes an HTML-looking string to StyledText — an
+// `<img src=...>` in a name or play description would make the shell process
+// fetch a URL); ASCII controls; bidi override/isolate marks and Unicode tag
+// characters (display-spoofing, CVE-2021-42574 class — tag chars are the
+// surrogate pair DB40 DC00-DC7F, written that way so the regex needs no /u
+// flag support from the QML engine). Then caps length, because a
+// pathologically long field is a layout-cost problem.
 function clean(value, max) {
   var s = String(value === undefined || value === null ? "" : value)
-  s = s.replace(/[<>]/g, "").replace(/[\x00-\x1f\x7f]/g, "")
+  s = s.replace(/[<>]/g, "")
+    .replace(/[\x00-\x1f\x7f]/g, "")
+    .replace(/[\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g, "")
+    .replace(/\uDB40[\uDC00-\uDC7F]/g, "")
   var cap = max || 64
   return s.length > cap ? s.slice(0, cap) : s
 }
 
+function num(v) {
+  var n = Number(v)
+  return isNaN(n) ? 0 : n
+}
+
 // statsapi /schedule (hydrate=team,linescore) -> ordered games for one team.
-// Each game: { gamePk, startMs, state ("pre"|"live"|"final"), detail,
-//   home/away: {id, abbr, name, score}, isHome }.
+// Each game: { gamePk, startMs, state, detail, home/away: {id, abbr, name,
+// score}, isHome }. States: "pre" | "live" | "final" | "postponed".
+// Postponed, cancelled, and suspended games get their own state because
+// statsapi codes them under misleading abstract states (Postponed/Cancelled
+// are abstract "Final" with no score; Suspended is abstract "Live" that
+// would otherwise wedge the widget in live mode until the resumption).
 // A game whose date does not parse is dropped rather than mis-sorted.
 function parseSchedule(raw, myTeamId) {
   var out = []
+  var s = String(raw || "")
+  if (s.length > MAX_BODY_CHARS) return out
   var data
-  try { data = JSON.parse(String(raw || "")) } catch (e) { return out }
+  try { data = JSON.parse(s) } catch (e) { return out }
   if (!data || !data.dates) return out
   for (var i = 0; i < data.dates.length; i++) {
     var games = data.dates[i].games || []
@@ -94,15 +113,20 @@ function parseSchedule(raw, myTeamId) {
       var g = games[j]
       var startMs = Date.parse(g.gameDate)
       if (isNaN(startMs)) continue
+      var detail = clean(g.status ? g.status.detailedState : "", 32)
       var abstract = g.status ? String(g.status.abstractGameState) : ""
-      var state = abstract === "Live" ? "live" : (abstract === "Final" ? "final" : "pre")
+      var state
+      if (/^(Postponed|Cancelled|Suspended)/.test(detail)) state = "postponed"
+      else if (abstract === "Live") state = "live"
+      else if (abstract === "Final") state = "final"
+      else state = "pre"
       var home = sideInfo(g.teams && g.teams.home)
       var away = sideInfo(g.teams && g.teams.away)
       out.push({
-        gamePk: g.gamePk || 0,
+        gamePk: num(g.gamePk),
         startMs: startMs,
         state: state,
-        detail: clean(g.status ? g.status.detailedState : "", 32),
+        detail: detail,
         home: home,
         away: away,
         isHome: home.id === myTeamId
@@ -116,20 +140,37 @@ function parseSchedule(raw, myTeamId) {
 function sideInfo(side) {
   var t = side && side.team ? side.team : {}
   return {
-    id: t.id || 0,
+    id: num(t.id),
     abbr: clean(t.abbreviation || "", 6),
     name: clean(t.teamName || t.name || "", 32),
-    score: side && side.score !== undefined && side.score !== null ? side.score : -1
+    score: side && side.score !== undefined && side.score !== null ? num(side.score) : -1
   }
 }
 
+// How far past the scheduled first pitch a game may run late (rain delay,
+// statsapi lagging the status flip) while still holding the pill. Without
+// this grace, a "Delayed Start: Rain" game — which statsapi keeps in
+// abstract Preview — would collapse the widget at exactly the moment the
+// user is looking for it.
+var NEXT_GRACE_MS = 6 * 3600000
+
+// A finished game reads on the pill for this long past its estimated end.
+var FINAL_FRESH_MS = 8 * 3600000
+
+// Rough game length, used to estimate the final out from first pitch. The
+// postgame window measures from the END of a game; measuring from first
+// pitch silently ate the whole window on a split doubleheader.
+var GAME_EST_MS = Math.round(3.25 * 3600000)
+
 // The bar's one question: what matters right now? Returns
 //   { status: "live",  game }             a game is in progress
-//   { status: "final", game }             most recent final, shown until the
-//                                         next game is closer than the last
-//                                         final is old (postgame window)
-//   { status: "next",  game, msUntil }    between games
-//   { status: "off" }                     nothing scheduled in the window
+//   { status: "final", game }             most recent completed final, shown
+//                                         while fresh and nothing is closer
+//   { status: "next",  game, msUntil }    between games (msUntil can be
+//                                         negative during a delayed start)
+//   { status: "off" }                     nothing usable in the window
+// Postponed/cancelled/suspended games are skipped everywhere: they carry no
+// score, no live feed, and no reliable restart time.
 function currentOrNext(games, nowMs) {
   var live = null
   var lastFinal = null
@@ -137,17 +178,17 @@ function currentOrNext(games, nowMs) {
   for (var i = 0; i < games.length; i++) {
     var g = games[i]
     if (g.state === "live") { live = g; break }
-    if (g.state === "final" && (!lastFinal || g.startMs > lastFinal.startMs)) lastFinal = g
-    if (g.state === "pre" && g.startMs > nowMs && (!next || g.startMs < next.startMs)) next = g
+    if (g.state === "final" && g.home.score >= 0 && g.away.score >= 0
+        && (!lastFinal || g.startMs > lastFinal.startMs)) lastFinal = g
+    if (g.state === "pre" && g.startMs > nowMs - NEXT_GRACE_MS
+        && (!next || g.startMs < next.startMs)) next = g
   }
   if (live) return { status: "live", game: live }
-  // Postgame window: keep the final on the pill while it is fresher than the
-  // wait to the next game (capped at 8 hours), so a just-finished game reads
-  // W/L instead of instantly flipping to tomorrow's countdown.
   if (lastFinal) {
-    var age = nowMs - lastFinal.startMs
-    var freshMs = 8 * 3600000
-    if (age < freshMs && (!next || age < next.startMs - nowMs))
+    var age = nowMs - (lastFinal.startMs + GAME_EST_MS)
+    if (age < 0) age = 0
+    var timeToNext = next ? next.startMs - nowMs : -1
+    if (age < FINAL_FRESH_MS && (!next || timeToNext < 0 || age < timeToNext))
       return { status: "final", game: lastFinal }
   }
   if (next) return { status: "next", game: next, msUntil: next.startMs - nowMs }
@@ -155,7 +196,8 @@ function currentOrNext(games, nowMs) {
 }
 
 // Compact countdown: keeps the two most significant units so the pill stays
-// narrow. "2d 4h" -> "1h 05m" -> "14m" -> "now".
+// narrow. "2d 4h" -> "1h 05m" -> "14m" -> "now" (which also covers a
+// delayed start already past its scheduled time).
 function countdown(msUntil) {
   if (msUntil <= 30000) return "now"
   var totalMinutes = Math.round(msUntil / 60000)
@@ -167,12 +209,35 @@ function countdown(msUntil) {
   return (minutes < 10 ? "0" : "") + minutes + "m"
 }
 
-// GUMBO /game/<pk>/feed/live -> the live-view model. Malformed input
-// returns { valid: false } so the panel keeps last-good state.
+// The fully-populated zero object the panel holds before the first GUMBO
+// poll and between games. Every field a binding touches exists, so no
+// binding ever evaluates to undefined (which logs a scene warning even
+// inside an invisible section).
+function emptyGumbo() {
+  return {
+    valid: false,
+    state: "",
+    awayAbbr: "", homeAbbr: "",
+    awayRuns: 0, homeRuns: 0,
+    awayHits: 0, homeHits: 0,
+    awayErrors: 0, homeErrors: 0,
+    inning: 0, inningOrdinal: "", inningState: "", isTop: false,
+    balls: 0, strikes: 0, outs: 0,
+    bases: { first: false, second: false, third: false },
+    batter: "", pitcher: "",
+    lastPlay: "",
+    innings: []
+  }
+}
+
+// GUMBO /game/<pk>/feed/live -> the live-view model. Malformed or oversized
+// input returns the empty shape so the panel keeps last-good state.
 function parseGumbo(raw) {
-  var invalid = { valid: false }
+  var invalid = emptyGumbo()
+  var s = String(raw || "")
+  if (s.length > MAX_BODY_CHARS) return invalid
   var data
-  try { data = JSON.parse(String(raw || "")) } catch (e) { return invalid }
+  try { data = JSON.parse(s) } catch (e) { return invalid }
   if (!data || !data.liveData || !data.gameData) return invalid
   var ls = data.liveData.linescore || {}
   var plays = data.liveData.plays || {}
@@ -182,15 +247,26 @@ function parseGumbo(raw) {
   var teams = data.gameData.teams || {}
   var lsTeams = ls.teams || {}
 
+  var currentInning = num(ls.currentInning)
+  var inningState = clean(ls.inningState, 10)
+
+  // Cap the innings list: a real game has ~9-20; the cap means a hostile or
+  // corrupt feed cannot turn the Repeater into 10^5 items on the UI thread.
   var innings = []
   var rawInnings = ls.innings || []
-  for (var i = 0; i < rawInnings.length; i++) {
+  var maxInnings = rawInnings.length > 30 ? 30 : rawInnings.length
+  for (var i = 0; i < maxInnings; i++) {
     var inn = rawInnings[i]
-    innings.push({
-      n: inn.num || (i + 1),
-      away: inn.away && inn.away.runs !== undefined && inn.away.runs !== null ? inn.away.runs : -1,
-      home: inn.home && inn.home.runs !== undefined && inn.home.runs !== null ? inn.home.runs : -1
-    })
+    var n = num(inn.num) || (i + 1)
+    var away = inn.away && inn.away.runs !== undefined && inn.away.runs !== null ? num(inn.away.runs) : -1
+    var home = inn.home && inn.home.runs !== undefined && inn.home.runs !== null ? num(inn.home.runs) : -1
+    // The half being batted right now is a 0 in progress, not an unplayed
+    // dash — a box score never shows "-" for the inning on the field.
+    if (n === currentInning) {
+      if (inningState === "Top" && away < 0) away = 0
+      if (inningState === "Bottom" && home < 0) home = 0
+    }
+    innings.push({ n: n, away: away, home: home })
   }
 
   var lastPlay = ""
@@ -201,6 +277,17 @@ function parseGumbo(raw) {
       lastPlay = clean(p.result.description, 160)
       break
     }
+  }
+
+  // At the instant an at-bat ends, currentPlay IS the completed play, so its
+  // matchup still names the batter who just made the out — right above a
+  // last-play line describing that same out. Blank the matchup at that
+  // boundary; the panel hides the row until the next batter steps in.
+  var batter = ""
+  var pitcher = ""
+  if (!(cp.about && cp.about.isComplete === true)) {
+    batter = clean(cp.matchup && cp.matchup.batter ? cp.matchup.batter.fullName : "", 32)
+    pitcher = clean(cp.matchup && cp.matchup.pitcher ? cp.matchup.pitcher.fullName : "", 32)
   }
 
   return {
@@ -214,9 +301,9 @@ function parseGumbo(raw) {
     homeHits: num(lsTeams.home ? lsTeams.home.hits : 0),
     awayErrors: num(lsTeams.away ? lsTeams.away.errors : 0),
     homeErrors: num(lsTeams.home ? lsTeams.home.errors : 0),
-    inning: num(ls.currentInning),
+    inning: currentInning,
     inningOrdinal: clean(ls.currentInningOrdinal, 6),
-    inningState: clean(ls.inningState, 10),
+    inningState: inningState,
     isTop: ls.isTopInning === true,
     balls: num(count.balls !== undefined ? count.balls : ls.balls),
     strikes: num(count.strikes !== undefined ? count.strikes : ls.strikes),
@@ -226,16 +313,11 @@ function parseGumbo(raw) {
       second: !!offense.second,
       third: !!offense.third
     },
-    batter: clean(cp.matchup && cp.matchup.batter ? cp.matchup.batter.fullName : "", 32),
-    pitcher: clean(cp.matchup && cp.matchup.pitcher ? cp.matchup.pitcher.fullName : "", 32),
+    batter: batter,
+    pitcher: pitcher,
     lastPlay: lastPlay,
     innings: innings
   }
-}
-
-function num(v) {
-  var n = Number(v)
-  return isNaN(n) ? 0 : n
 }
 
 // Count for display. At the instant an at-bat ends, GUMBO's currentPlay
@@ -263,7 +345,7 @@ function basesText(bases) {
 }
 
 // Half-inning tag for the pill: T4 / B7. Between halves GUMBO says
-// "Middle"/"End"; both display as the side about to bat, marked with a dot.
+// "Middle"/"End"; both display with their own letter.
 function inningTag(gumbo) {
   if (!gumbo || !gumbo.inning) return ""
   var st = String(gumbo.inningState || "")
@@ -285,7 +367,7 @@ function scorePair(state, myTeamId) {
 // Bar pill text.
 //   live, gumbo known : "ATL 1-0 · T4 · 2-2, 0 out"
 //   live, gumbo not yet: "ATL 1-0 · LIVE"
-//   next              : "ATL @ CWS 1h 05m"
+//   next              : "ATL @ CWS 1h 05m" (or "... now" in a delayed start)
 //   final             : "ATL W 4-2"
 //   off               : ""
 function pillText(state, myTeamId, gumbo) {
@@ -314,11 +396,13 @@ function pillText(state, myTeamId, gumbo) {
 }
 
 // statsapi /standings (leagueId=103,104) -> the division holding teamId:
-// { division, rows: [{rank, name, wins, losses, gb, streak}] }.
+// { division, rows: [{rank, id, name, wins, losses, gb, streak}] }.
 function parseStandings(raw, myTeamId) {
   var empty = { division: "", rows: [] }
+  var s = String(raw || "")
+  if (s.length > MAX_BODY_CHARS) return empty
   var data
-  try { data = JSON.parse(String(raw || "")) } catch (e) { return empty }
+  try { data = JSON.parse(s) } catch (e) { return empty }
   if (!data || !data.records) return empty
   for (var i = 0; i < data.records.length; i++) {
     var rec = data.records[i]
@@ -333,7 +417,7 @@ function parseStandings(raw, myTeamId) {
       var tr = teamRecords[k]
       rows.push({
         rank: parseInt(tr.divisionRank, 10) || (k + 1),
-        id: tr.team ? tr.team.id : 0,
+        id: tr.team ? num(tr.team.id) : 0,
         name: clean(tr.team ? tr.team.name : "", 32),
         wins: num(tr.wins),
         losses: num(tr.losses),
@@ -354,7 +438,7 @@ function parseStandings(raw, myTeamId) {
 // A stable key for "the game situation the recap describes". The panel only
 // regenerates when this changes, so one storyline per game state, cached
 // hard, not one per refresh tick.
-function recapCacheKey(state, myTeamId) {
+function recapCacheKey(state) {
   if (!state || state.status === "off") return "off"
   if (state.status === "live") return "live"
   var g = state.game
@@ -380,17 +464,17 @@ function recapContext(teamAbbr, state, standings, games, nowMs) {
   }
   if (state && state.status === "final") {
     var s = scorePair(state, t ? t.id : 0)
-    var wl = s.mine.score > s.theirs.score ? "beat" : "lost to"
-    lines.push("Last game: " + wl + " " + s.theirs.name + " " + s.mine.score + "-" + s.theirs.score)
+    var verb = s.mine.score > s.theirs.score ? "beat"
+      : (s.mine.score < s.theirs.score ? "lost to" : "tied")
+    lines.push("Last game: " + verb + " " + s.theirs.name + " " + s.mine.score + "-" + s.theirs.score)
   }
   if (games) {
     for (var j = 0; j < games.length; j++) {
       var g = games[j]
       if (g.state === "pre" && g.startMs > nowMs) {
         var opp = g.isHome ? g.away : g.home
-        var hrs = Math.round((g.startMs - nowMs) / 3600000)
         lines.push("Next game: " + (g.isHome ? "home vs " : "away at ") + opp.name
-          + " in about " + hrs + " hours")
+          + " in " + countdown(g.startMs - nowMs))
         break
       }
     }
@@ -429,10 +513,13 @@ function recapRequestBody(model, context) {
 
 // choices[0].message.content, sanitized and capped. Some OpenAI-compatible
 // servers return content as an array of typed parts; join the text parts.
-// Anything malformed returns "" and the panel simply shows no recap section.
+// Anything malformed or oversized returns "" and the panel simply shows no
+// recap section.
 function parseRecap(raw) {
+  var s = String(raw || "")
+  if (s.length > MAX_BODY_CHARS) return ""
   var data
-  try { data = JSON.parse(String(raw || "")) } catch (e) { return "" }
+  try { data = JSON.parse(s) } catch (e) { return "" }
   var c = data && data.choices && data.choices[0]
   var content = c && c.message ? c.message.content : ""
   if (content && content.length !== undefined && typeof content !== "string") {
@@ -448,15 +535,13 @@ function parseRecap(raw) {
 
 if (typeof module !== "undefined") {
   module.exports = {
-    TEAMS: TEAMS,
-    DIVISIONS: DIVISIONS,
     teamAbbrs: teamAbbrs,
     teamId: teamId,
-    teamDivision: teamDivision,
     clean: clean,
     parseSchedule: parseSchedule,
     currentOrNext: currentOrNext,
     countdown: countdown,
+    emptyGumbo: emptyGumbo,
     parseGumbo: parseGumbo,
     countText: countText,
     basesText: basesText,

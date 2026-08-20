@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" width="1200" height="340" role="img" aria-label="MLB Booth banner">
+  <!-- Dark field -->
+  <rect width="1200" height="340" fill="#0e1116"/>
+
+  <!-- Infield diamond, drawn low and to the left so it never crosses the text -->
+  <g transform="translate(150,240)" stroke="#2e3d52" stroke-width="3" fill="none">
+    <path d="M 0,-56 L 56,0 L 0,56 L -56,0 Z"/>
+    <path d="M 0,-34 L 34,0 L 0,34 L -34,0 Z" stroke="#22303f"/>
+    <circle cx="0" cy="0" r="5" fill="#2e3d52" stroke="none"/>
+  </g>
+
+  <!-- Basepath accent under the wordmark -->
+  <line x1="300" y1="205" x2="1080" y2="205" stroke="#22303f" stroke-width="2"/>
+
+  <!-- Wordmark -->
+  <text x="300" y="150" font-family="'JetBrains Mono','DejaVu Sans Mono',monospace" font-size="86" font-weight="700" letter-spacing="10" fill="#e6e8eb">MLB BOOTH</text>
+
+  <!-- Tagline, clear of every stroke -->
+  <text x="300" y="250" font-family="'JetBrains Mono','DejaVu Sans Mono',monospace" font-size="26" letter-spacing="2" fill="#8b98a9">score · half inning · count · outs · live from the Omarchy bar</text>
+
+  <!-- Sample pill, bottom right, echoing the live format -->
+  <g transform="translate(760,285)">
+    <rect x="0" y="-24" width="330" height="36" rx="6" fill="#161b23" stroke="#2e3d52" stroke-width="1.5"/>
+    <text x="14" y="1" font-family="'JetBrains Mono','DejaVu Sans Mono',monospace" font-size="20" fill="#d4864e">ATL 1-0 · T4 · 2-2, 0 out</text>
+  </g>
+</svg>
