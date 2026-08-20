@@ -495,8 +495,8 @@ Panel {
             Text {
               anchors.left: parent.left
               anchors.leftMargin: Style.space(16)
-              text: root.gumbo.balls + "-" + root.gumbo.strikes + ", " + root.gumbo.outs
-                + " out · On base: " + Model.basesText(root.gumbo.bases)
+              text: Model.countText(root.gumbo.balls, root.gumbo.strikes) + ", "
+                + root.gumbo.outs + " out · On base: " + Model.basesText(root.gumbo.bases)
               textFormat: Text.PlainText
               color: root.bar ? root.bar.foreground : Color.foreground
               font.family: root.bar ? root.bar.fontFamily : Style.font.family

@@ -161,6 +161,13 @@ test("basesText covers empty, singles, pairs, and loaded", () => {
   assert.equal(Model.basesText({ first: true, second: true, third: true }), "Bases loaded")
 })
 
+test("countText resets a completed at-bat's count to 0-0, broadcast style", () => {
+  assert.equal(Model.countText(2, 2), "2-2")
+  assert.equal(Model.countText(3, 3), "0-0")
+  assert.equal(Model.countText(4, 2), "0-0")
+  assert.equal(Model.countText(0, 0), "0-0")
+})
+
 test("inningTag renders half-inning states", () => {
   assert.equal(Model.inningTag(Model.parseGumbo(gumboRaw)), "T4")
   assert.equal(Model.inningTag({ inning: 7, inningState: "Bottom" }), "B7")

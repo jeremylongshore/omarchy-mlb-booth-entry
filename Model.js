@@ -238,6 +238,17 @@ function num(v) {
   return isNaN(n) ? 0 : n
 }
 
+// Count for display. At the instant an at-bat ends, GUMBO's currentPlay
+// still carries the completed count (a strikeout reads strikes=3, a walk
+// balls=4). Broadcast convention resets the graphic to 0-0 for the next
+// batter; caught live on the rig when the pill read "3-3".
+function countText(balls, strikes) {
+  var b = num(balls)
+  var s = num(strikes)
+  if (b > 3 || s > 2) return "0-0"
+  return b + "-" + s
+}
+
 // Base-out state in broadcast words: "Empty", "1st", "1st & 3rd",
 // "Bases loaded".
 function basesText(bases) {
@@ -289,7 +300,7 @@ function pillText(state, myTeamId, gumbo) {
       var theirRuns = state.game.isHome ? gumbo.awayRuns : gumbo.homeRuns
       score = s.mine.abbr + " " + mineRuns + "-" + theirRuns
       return score + " · " + inningTag(gumbo) + " · "
-        + gumbo.balls + "-" + gumbo.strikes + ", " + gumbo.outs + " out"
+        + countText(gumbo.balls, gumbo.strikes) + ", " + gumbo.outs + " out"
     }
     return score + " · LIVE"
   }
@@ -435,6 +446,7 @@ if (typeof module !== "undefined") {
     currentOrNext: currentOrNext,
     countdown: countdown,
     parseGumbo: parseGumbo,
+    countText: countText,
     basesText: basesText,
     inningTag: inningTag,
     scorePair: scorePair,
