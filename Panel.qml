@@ -413,7 +413,9 @@ Panel {
                   font.pixelSize: Style.font.bodySmall
                 }
                 Text {
-                  text: root.gumbo.awayAbbr
+                  // "||""" keeps the binding a QString before the first GUMBO
+                  // poll fills the object (undefined logs a scene warning).
+                  text: root.gumbo.awayAbbr || ""
                   textFormat: Text.PlainText
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
@@ -421,7 +423,7 @@ Panel {
                   font.bold: true
                 }
                 Text {
-                  text: root.gumbo.homeAbbr
+                  text: root.gumbo.homeAbbr || ""
                   textFormat: Text.PlainText
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
@@ -655,7 +657,9 @@ Panel {
                   anchors.right: parent.right
                   anchors.rightMargin: Style.space(16)
                   anchors.verticalCenter: parent.verticalCenter
-                  text: modelData.wins + "-" + modelData.losses + "  " + modelData.gb + " GB"
+                  // Leader shows the bare record; the pack shows games back.
+                  text: modelData.wins + "-" + modelData.losses
+                    + (modelData.gb === "-" ? "" : "  " + modelData.gb + " back")
                   textFormat: Text.PlainText
                   color: root.bar ? Qt.darker(root.bar.foreground, isMine ? 1.0 : 1.3) : Color.muted
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
