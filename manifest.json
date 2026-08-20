@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "io.github.YOURNAME.widget-name",
-  "name": "Widget Name",
-  "version": "0.1.0",
-  "author": "Your Name",
+  "id": "io.github.jeremylongshore.mlb-booth",
+  "name": "MLB Booth",
+  "version": "1.0.0",
+  "author": "Jeremy Longshore",
   "license": "MIT",
-  "description": "One-sentence description of what the widget shows in the Omarchy bar.",
+  "description": "Deep live MLB game for the Omarchy bar. Pick any of the 30 clubs; the pill carries score, half inning, count, and outs from the same GUMBO feed the broadcast booth reads. Free, keyless data from the MLB Stats API.",
   "kinds": [
     "bar-widget"
   ],
@@ -13,12 +13,54 @@
     "barWidget": "BarWidget.qml"
   },
   "barWidget": {
-    "displayName": "Widget Name",
-    "description": "Longer description: what the pill shows, what the panel carries, where the data comes from.",
+    "displayName": "MLB Booth",
+    "description": "Bar pill counts down to first pitch, then goes live: score, half inning, count, and outs, updated every 20 seconds. The panel carries the line score, bases and matchup, last play, the week's schedule in your local time, and the division race. Optional: point three settings at any OpenAI-compatible endpoint and The Booth writes a short storyline between games; the widget is complete without it.",
     "category": "Info",
     "aliases": [
-      "widget-name"
+      "mlb",
+      "baseball",
+      "mlb-booth",
+      "box-score"
     ],
-    "allowMultiple": false
+    "allowMultiple": false,
+    "defaults": {
+      "team": "ATL",
+      "aiBaseUrl": "",
+      "aiModel": "",
+      "aiApiKey": ""
+    },
+    "schema": [
+      {
+        "key": "team",
+        "type": "enum",
+        "label": "Team",
+        "options": [
+          "ATH", "ATL", "AZ", "BAL", "BOS", "CHC", "CIN", "CLE", "COL", "CWS",
+          "DET", "HOU", "KC", "LAA", "LAD", "MIA", "MIL", "MIN", "NYM", "NYY",
+          "PHI", "PIT", "SD", "SEA", "SF", "STL", "TB", "TEX", "TOR", "WSH"
+        ],
+        "defaultValue": "ATL"
+      },
+      {
+        "key": "aiBaseUrl",
+        "type": "string",
+        "label": "AI recap base URL (optional)",
+        "defaultValue": "",
+        "description": "OpenAI-compatible API base, e.g. https://api.openai.com/v1. Leave empty to keep the widget fully keyless."
+      },
+      {
+        "key": "aiModel",
+        "type": "string",
+        "label": "AI recap model (optional)",
+        "defaultValue": ""
+      },
+      {
+        "key": "aiApiKey",
+        "type": "string",
+        "label": "AI recap API key (optional)",
+        "defaultValue": "",
+        "description": "Stored in your local shell settings. Only ever sent to the base URL you set above, and only between games."
+      }
+    ]
   }
 }

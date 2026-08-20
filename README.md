@@ -1,73 +1,66 @@
-# Omarchy Widget Template
+# MLB Booth
 
-A batteries-included skeleton for an Omarchy bar widget. It carries the
-architecture and security patterns two shipped entries (Pit Wall, Crew Chief)
-earned the hard way, so a new widget starts from a state that already passes
-the pre-submit gates.
+Deep live MLB for the Omarchy bar. Pick any of the 30 clubs. Between games the
+pill counts down to first pitch; during one it reads like the booth's
+scorecard: score, half inning, count, and outs, refreshed every 20 seconds
+from the same GUMBO feed the broadcast graphics run on.
 
-## What you get
+```
+󰡒 ATL @ CWS 1h 05m        before the game
+󰡒 ATL 1-0 · T4 · 2-2, 0 out    during it
+󰡒 ATL W 4-2               after it
+```
 
-| File | Role |
+Click the pill for the panel:
+
+- **Line score** by inning with R H E, plus bases, count, the live matchup,
+  and the last play as the scorer described it.
+- **Schedule** for the coming week in your local time.
+- **The division race**, your club bolded.
+- **The Booth** (optional): a two-sentence storyline between games, written
+  by any OpenAI-compatible model you point it at. Off by default; the widget
+  is complete without it.
+
+## Data
+
+Everything live comes free and keyless from the MLB Stats API
+(statsapi.mlb.com): the schedule endpoint with team and line-score hydration,
+the GUMBO live feed per game, and the standings endpoint. No account, no
+token, no scraping.
+
+| Feed | Cadence |
 | --- | --- |
-| `BarWidget.qml` | Bar host. Owns the slot and pill button. Shape contract for shell summon/hide/toggle routing. Edit only `moduleName`. |
-| `Panel.qml` | Data lifecycle and popup UI. Fetch via `Process` + `StdioCollector`, parse in `Model.js`, fixed omakase constants, IPC handler, `KeyboardPanel` popup scaffold. |
-| `Model.js` | Pure data layer. Loads in Quickshell AND node, so the whole parse path unit-tests without a shell. `clean()` sanitizer included. |
-| `tests/` | `node --test` harness with fixture loading. Capture real API bodies into `tests/fixtures/`. |
-| `manifest.json` | Placeholder manifest with a commented settings schema. |
-| `.github/workflows/test.yml` | CI: the node test suite on every push. |
+| Schedule + standings | every 15 minutes |
+| GUMBO live feed | every 20 seconds, only while a game runs |
+| The Booth recap | once per game-state change, never during live play |
 
-## Instantiate
+Every fetch is byte-capped and time-capped; a failed or oversized response
+keeps the last good state on screen. Every string from the network is
+sanitized before it reaches a text element.
 
-```bash
-gh repo create YOURNAME/omarchy-your-widget-entry --template jeremylongshore/omarchy-widget-template --public --clone
-cd omarchy-your-widget-entry
-grep -rl 'YOURNAME\|widget-name\|WIDGET NAME' . | xargs sed -i 's/io.github.YOURNAME.widget-name/io.github.YOURNAME.your-widget/g'
-```
+## Settings
 
-Then replace the example fetch in `Panel.qml`, the parse functions in
-`Model.js`, and the placeholder fields in `manifest.json`.
+One setting matters: **Team**. The three AI fields (base URL, model, API key)
+are optional and the recap stays off until all three are filled.
 
-## The rules the template encodes
+## Why not the existing scores plugin
 
-These are not style preferences. Each one maps to a defect that shipped in a
-real entry and had to be swept after the fact.
+The multi-sport scores widget is wide: every league, one line per game. MLB
+Booth is narrow and deep: one club, the full in-game state (count, outs,
+bases, last play), the division race, and an optional voice in the booth. If
+you follow one team through a season, this is the difference between a
+ticker and a scorecard.
 
-1. **Every network body parses in `Model.js`.** Pure functions, node-testable,
-   malformed input returns the empty shape so the panel keeps last-good state.
-2. **Every API string passes through `Model.clean()`** before a QML `Text`
-   sees it. Strips angle brackets (AutoText promotion) and control chars,
-   caps length.
-3. **Every `Text` that renders API data declares `textFormat:
-   Text.PlainText`.** AutoText sniffs strings for HTML; a hostile payload can
-   trigger outbound image fetches.
-4. **Every curl argv carries `--max-time` and `--max-filesize`.** An
-   unbounded body freezes the shell's UI thread on `JSON.parse`.
-5. **The pill never silently vanishes.** An unreachable API reads as
-   loading, not widget-gone. Return `""` from `label` only when the widget is
-   legitimately quiet.
-6. **Omakase constants over settings knobs.** Add a manifest settings schema
-   only for choices a user genuinely owns.
-7. **No em dashes, no private names, no stray tildes in anything shipped.**
-
-## Pre-submit checklist
-
-On the dev box:
+## Development
 
 ```bash
-node --test tests/           # unit suite green
-~/.contribute-system/bin/gate-runner.sh omarchy-submit "$(pwd)"   # must PASS
+node --test tests/    # unit suite over captured statsapi fixtures
 ```
 
-On an Omarchy rig (the validator and qmllint live there):
-
-```bash
-omarchy-plugin-validate .
-qmllint *.qml
-# install, render, screenshot the pill + open panel for preview.png
-```
-
-Only then draft the marketplace submission issue, and have a human approve
-the body before posting.
+The data layer (`Model.js`) is pure functions and loads in both Quickshell
+and node; fixtures under `tests/fixtures/` are real API bodies captured
+during a live game. Built from
+[omarchy-widget-template](https://github.com/jeremylongshore/omarchy-widget-template).
 
 ## License
 

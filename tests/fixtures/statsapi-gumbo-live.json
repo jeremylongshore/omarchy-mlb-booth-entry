@@ -1,0 +1,438 @@
+{
+  "gameData": {
+    "status": {
+      "abstractGameState": "Live",
+      "codedGameState": "I",
+      "detailedState": "In Progress",
+      "statusCode": "I",
+      "startTimeTBD": false,
+      "abstractGameCode": "L"
+    },
+    "teams": {
+      "away": {
+        "abbreviation": "ATL",
+        "name": "Atlanta Braves"
+      },
+      "home": {
+        "abbreviation": "CWS",
+        "name": "Chicago White Sox"
+      }
+    }
+  },
+  "liveData": {
+    "linescore": {
+      "currentInning": 4,
+      "currentInningOrdinal": "4th",
+      "inningState": "Top",
+      "inningHalf": "Top",
+      "isTopInning": true,
+      "scheduledInnings": 9,
+      "innings": [
+        {
+          "num": 1,
+          "ordinalNum": "1st",
+          "home": {
+            "runs": 0,
+            "hits": 0,
+            "errors": 0,
+            "leftOnBase": 0
+          },
+          "away": {
+            "runs": 0,
+            "hits": 0,
+            "errors": 0,
+            "leftOnBase": 0
+          }
+        },
+        {
+          "num": 2,
+          "ordinalNum": "2nd",
+          "home": {
+            "runs": 0,
+            "hits": 0,
+            "errors": 0,
+            "leftOnBase": 1
+          },
+          "away": {
+            "runs": 0,
+            "hits": 0,
+            "errors": 0,
+            "leftOnBase": 0
+          }
+        },
+        {
+          "num": 3,
+          "ordinalNum": "3rd",
+          "home": {
+            "runs": 0,
+            "hits": 0,
+            "errors": 0,
+            "leftOnBase": 0
+          },
+          "away": {
+            "runs": 1,
+            "hits": 2,
+            "errors": 0,
+            "leftOnBase": 1
+          }
+        },
+        {
+          "num": 4,
+          "ordinalNum": "4th",
+          "home": {
+            "hits": 0,
+            "errors": 0,
+            "leftOnBase": 0
+          },
+          "away": {
+            "hits": 0,
+            "errors": 0,
+            "leftOnBase": 0
+          }
+        }
+      ],
+      "teams": {
+        "home": {
+          "runs": 0,
+          "hits": 0,
+          "errors": 0,
+          "leftOnBase": 1
+        },
+        "away": {
+          "runs": 1,
+          "hits": 2,
+          "errors": 0,
+          "leftOnBase": 1
+        }
+      },
+      "defense": {
+        "pitcher": {
+          "id": 641743,
+          "fullName": "Anthony Kay",
+          "link": "/api/v1/people/641743"
+        },
+        "catcher": {
+          "id": 691011,
+          "fullName": "Drew Romo",
+          "link": "/api/v1/people/691011"
+        },
+        "first": {
+          "id": 808959,
+          "fullName": "Munetaka Murakami",
+          "link": "/api/v1/people/808959"
+        },
+        "second": {
+          "id": 805367,
+          "fullName": "Chase Meidroth",
+          "link": "/api/v1/people/805367"
+        },
+        "third": {
+          "id": 678246,
+          "fullName": "Miguel Vargas",
+          "link": "/api/v1/people/678246"
+        },
+        "shortstop": {
+          "id": 695657,
+          "fullName": "Colson Montgomery",
+          "link": "/api/v1/people/695657"
+        },
+        "left": {
+          "id": 803011,
+          "fullName": "Sam Antonacci",
+          "link": "/api/v1/people/803011"
+        },
+        "center": {
+          "id": 671976,
+          "fullName": "Tristan Peters",
+          "link": "/api/v1/people/671976"
+        },
+        "right": {
+          "id": 695731,
+          "fullName": "Braden Montgomery",
+          "link": "/api/v1/people/695731"
+        },
+        "batter": {
+          "id": 808959,
+          "fullName": "Munetaka Murakami",
+          "link": "/api/v1/people/808959"
+        },
+        "onDeck": {
+          "id": 678246,
+          "fullName": "Miguel Vargas",
+          "link": "/api/v1/people/678246"
+        },
+        "inHole": {
+          "id": 643217,
+          "fullName": "Andrew Benintendi",
+          "link": "/api/v1/people/643217"
+        },
+        "battingOrder": 2,
+        "team": {
+          "id": 145,
+          "name": "Chicago White Sox",
+          "link": "/api/v1/teams/145"
+        }
+      },
+      "offense": {
+        "batter": {
+          "id": 621566,
+          "fullName": "Matt Olson",
+          "link": "/api/v1/people/621566"
+        },
+        "onDeck": {
+          "id": 645277,
+          "fullName": "Ozzie Albies",
+          "link": "/api/v1/people/645277"
+        },
+        "inHole": {
+          "id": 657041,
+          "fullName": "Lane Thomas",
+          "link": "/api/v1/people/657041"
+        },
+        "pitcher": {
+          "id": 656550,
+          "fullName": "Grant Holmes",
+          "link": "/api/v1/people/656550"
+        },
+        "battingOrder": 3,
+        "team": {
+          "id": 144,
+          "name": "Atlanta Braves",
+          "link": "/api/v1/teams/144"
+        }
+      },
+      "balls": 2,
+      "strikes": 2,
+      "outs": 0
+    },
+    "plays": {
+      "currentPlay": {
+        "count": {
+          "balls": 2,
+          "strikes": 2,
+          "outs": 0
+        },
+        "matchup": {
+          "batter": {
+            "fullName": "Matt Olson"
+          },
+          "pitcher": {
+            "fullName": "Anthony Kay"
+          }
+        },
+        "about": {
+          "atBatIndex": 21,
+          "halfInning": "top",
+          "isTopInning": true,
+          "inning": 4,
+          "startTime": "2026-08-20T18:53:14.842Z",
+          "endTime": "2026-08-20T18:54:31.252Z",
+          "isComplete": false,
+          "isScoringPlay": false,
+          "hasOut": false,
+          "captivatingIndex": 0
+        }
+      },
+      "allPlays": [
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "White Sox challenged (play at 1st), call on the field was overturned: Ronald Acuña Jr. grounds out, shortstop Colson Montgomery to first baseman Munetaka Murakami.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Drake Baldwin lines out sharply to right fielder Braden Montgomery.",
+            "event": "Lineout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Matt Olson strikes out swinging.",
+            "event": "Strikeout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Sam Antonacci grounds out to first baseman Matt Olson.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Munetaka Murakami grounds out, second baseman Ozzie Albies to first baseman Matt Olson.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Miguel Vargas lines out to center fielder Michael Harris II.",
+            "event": "Lineout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Ozzie Albies grounds out, shortstop Colson Montgomery to first baseman Munetaka Murakami.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Lane Thomas grounds out, second baseman Chase Meidroth to first baseman Munetaka Murakami.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Michael Harris II grounds out to first baseman Munetaka Murakami.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Andrew Benintendi grounds out, pitcher Grant Holmes to first baseman Matt Olson.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Braden Montgomery grounds out, second baseman Ozzie Albies to first baseman Matt Olson.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Colson Montgomery walks.",
+            "event": "Walk"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Chase Meidroth flies out sharply to right fielder Ronald Acuña Jr.",
+            "event": "Flyout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Mauricio Dubón singles on a ground ball to left fielder Sam Antonacci.",
+            "event": "Single"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Austin Riley doubles (20) on a sharp line drive to left fielder Sam Antonacci. Mauricio Dubón scores.",
+            "event": "Double"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Sean Murphy grounds out, second baseman Chase Meidroth to first baseman Munetaka Murakami. Austin Riley to 3rd.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Ronald Acuña Jr. grounds out, pitcher Anthony Kay to first baseman Munetaka Murakami.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Drake Baldwin grounds out to first baseman Munetaka Murakami.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Tristan Peters lines out to center fielder Michael Harris II.",
+            "event": "Lineout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Drew Romo lines out to center fielder Michael Harris II.",
+            "event": "Lineout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": true
+          },
+          "result": {
+            "description": "Sam Antonacci grounds out, third baseman Austin Riley to first baseman Matt Olson.",
+            "event": "Groundout"
+          }
+        },
+        {
+          "about": {
+            "isComplete": false
+          },
+          "result": {
+            "description": null,
+            "event": null
+          }
+        }
+      ]
+    }
+  }
+}

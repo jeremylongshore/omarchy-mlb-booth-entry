@@ -1,8 +1,8 @@
 {
-  "name": "omarchy-widget-template",
-  "version": "0.1.0",
+  "name": "omarchy-mlb-booth",
+  "version": "1.0.0",
   "private": true,
-  "description": "Omarchy bar widget template - dev harness for the Model.js data layer",
+  "description": "MLB Booth widget for the Omarchy bar - dev harness for the Model.js data layer",
   "scripts": {
     "test": "node --test tests/*.test.js"
   }
