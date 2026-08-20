@@ -42,28 +42,28 @@
   </g>
 
   <!-- Title block -->
-  <text x="72" y="132" font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="72" font-weight="700" letter-spacing="6" fill="#f0ead9">MLB BOOTH</text>
+  <text x="72" y="132" font-family="'JetBrains Mono',ui-monospace,'SF Mono',Menlo,'DejaVu Sans Mono',monospace" font-size="72" font-weight="700" letter-spacing="6" fill="#f0ead9">MLB BOOTH</text>
   <rect x="76" y="158" width="392" height="4" fill="url(#rule)"/>
-  <text x="72" y="204" font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="24" letter-spacing="1" fill="#c9c3b2">The whole ballgame, one pill in your bar.</text>
-  <text x="72" y="238" font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="16" letter-spacing="1" fill="#8b8778">count and outs · line score · last play · schedule · standings</text>
+  <text x="72" y="204" font-family="'JetBrains Mono',ui-monospace,'SF Mono',Menlo,'DejaVu Sans Mono',monospace" font-size="24" letter-spacing="1" fill="#c9c3b2">The whole ballgame, one pill in your bar.</text>
+  <text x="72" y="238" font-family="'JetBrains Mono',ui-monospace,'SF Mono',Menlo,'DejaVu Sans Mono',monospace" font-size="16" letter-spacing="1" fill="#8b8778">count and outs · line score · last play · schedule · standings</text>
 
   <!-- Bar pill mocks, top right -->
   <g transform="translate(796,46)">
     <rect x="0" y="0" width="334" height="46" rx="8" fill="#0d130e" stroke="#2b3a2e" stroke-width="1.5"/>
-    <text x="16" y="30" font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="17" fill="#f0ead9">ATL 1-0 · T7 · 2-2, 0 out</text>
+    <text x="16" y="30" font-family="'JetBrains Mono',ui-monospace,'SF Mono',Menlo,'DejaVu Sans Mono',monospace" font-size="17" fill="#f0ead9">ATL 1-0 · T7 · 2-2, 0 out</text>
     <circle cx="314" cy="23" r="5" fill="#c94f3d">
       <animate attributeName="opacity" values="1;0.25;1" dur="1.6s" repeatCount="indefinite"/>
     </circle>
   </g>
   <g transform="translate(796,104)">
     <rect x="0" y="0" width="334" height="46" rx="8" fill="#0d130e" stroke="#2b3a2e" stroke-width="1.5"/>
-    <text x="16" y="30" font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="17" fill="#c9c3b2">ATL @ CWS 1h 05m</text>
+    <text x="16" y="30" font-family="'JetBrains Mono',ui-monospace,'SF Mono',Menlo,'DejaVu Sans Mono',monospace" font-size="17" fill="#c9c3b2">ATL @ CWS 1h 05m</text>
   </g>
 
   <!-- Bulb-scoreboard line score, bottom right: the widget's identity -->
   <g transform="translate(796,182)">
     <rect x="0" y="0" width="334" height="112" rx="6" fill="#0a100b" stroke="#2b3a2e" stroke-width="1.5"/>
-    <g font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="15" letter-spacing="2">
+    <g font-family="'JetBrains Mono',ui-monospace,'SF Mono',Menlo,'DejaVu Sans Mono',monospace" font-size="15" letter-spacing="2">
       <text x="64" y="30" fill="#6f6b5e">1 2 3 4 5 6 7  R H E</text>
       <text x="16" y="62" fill="#f0ead9" letter-spacing="0">ATL</text>
       <text x="64" y="62" fill="#e8b04b">0 0 1 0 0 0 0  1 5 0</text>
