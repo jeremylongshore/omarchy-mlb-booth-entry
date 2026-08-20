@@ -1,26 +1,74 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" width="1200" height="340" role="img" aria-label="MLB Booth banner">
-  <!-- Dark field -->
-  <rect width="1200" height="340" fill="#0e1116"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" width="1200" height="340" role="img" aria-label="MLB Booth. The whole ballgame, one pill in your bar.">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#081409"/>
+      <stop offset="1" stop-color="#050a06"/>
+    </linearGradient>
+    <radialGradient id="lights" cx="0.16" cy="0.08" r="0.65">
+      <stop offset="0" stop-color="#e8b04b" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#e8b04b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f2c14e"/>
+      <stop offset="1" stop-color="#c9822e"/>
+    </linearGradient>
+  </defs>
 
-  <!-- Infield diamond, drawn low and to the left so it never crosses the text -->
-  <g transform="translate(150,240)" stroke="#2e3d52" stroke-width="3" fill="none">
-    <path d="M 0,-56 L 56,0 L 0,56 L -56,0 Z"/>
-    <path d="M 0,-34 L 34,0 L 0,34 L -34,0 Z" stroke="#22303f"/>
-    <circle cx="0" cy="0" r="5" fill="#2e3d52" stroke="none"/>
+  <rect width="1200" height="340" fill="url(#bg)"/>
+  <rect width="1200" height="340" fill="url(#lights)"/>
+
+  <!-- Ball seams arcing through the background right, low opacity, behind
+       everything and clear of every text baseline -->
+  <g stroke="#c94f3d" stroke-width="3" fill="none" opacity="0.18">
+    <path d="M 980 -40 C 900 80, 900 260, 980 380"/>
+    <path d="M 1080 -40 C 1160 80, 1160 260, 1080 380"/>
+    <g stroke-width="2">
+      <path d="M 962 40 l 22 8"/><path d="M 950 90 l 24 5"/><path d="M 944 145 l 25 2"/>
+      <path d="M 944 200 l 25 -2"/><path d="M 950 255 l 24 -5"/><path d="M 962 305 l 22 -8"/>
+      <path d="M 1098 40 l -22 8"/><path d="M 1110 90 l -24 5"/><path d="M 1116 145 l -25 2"/>
+      <path d="M 1116 200 l -25 -2"/><path d="M 1110 255 l -24 -5"/><path d="M 1098 305 l -22 -8"/>
+    </g>
   </g>
 
-  <!-- Basepath accent under the wordmark -->
-  <line x1="300" y1="205" x2="1080" y2="205" stroke="#22303f" stroke-width="2"/>
+  <!-- Infield diamond, low left, drawn below the feature line's baseline -->
+  <g transform="translate(136,294)" fill="none" opacity="0.8">
+    <path d="M 0,-32 L 32,0 L 0,32 L -32,0 Z" stroke="#3f6b46" stroke-width="3"/>
+    <path d="M 0,-19 L 19,0 L 0,19 L -19,0 Z" stroke="#2b4a31" stroke-width="2"/>
+    <rect x="-3" y="-35" width="6" height="6" fill="#d7d2c4" stroke="none"/>
+    <rect x="29" y="-3" width="6" height="6" fill="#d7d2c4" stroke="none"/>
+    <rect x="-35" y="-3" width="6" height="6" fill="#d7d2c4" stroke="none"/>
+    <path d="M -4,29 L 4,29 L 0,35 Z" fill="#d7d2c4" stroke="none"/>
+    <circle cx="0" cy="0" r="4" fill="#3f6b46" stroke="none"/>
+  </g>
 
-  <!-- Wordmark -->
-  <text x="300" y="150" font-family="'JetBrains Mono','DejaVu Sans Mono',monospace" font-size="86" font-weight="700" letter-spacing="10" fill="#e6e8eb">MLB BOOTH</text>
+  <!-- Title block -->
+  <text x="72" y="132" font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="72" font-weight="700" letter-spacing="6" fill="#f0ead9">MLB BOOTH</text>
+  <rect x="76" y="158" width="392" height="4" fill="url(#rule)"/>
+  <text x="72" y="204" font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="24" letter-spacing="1" fill="#c9c3b2">The whole ballgame, one pill in your bar.</text>
+  <text x="72" y="238" font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="16" letter-spacing="1" fill="#8b8778">count and outs · line score · last play · schedule · standings</text>
 
-  <!-- Tagline, clear of every stroke -->
-  <text x="300" y="250" font-family="'JetBrains Mono','DejaVu Sans Mono',monospace" font-size="26" letter-spacing="2" fill="#8b98a9">score · half inning · count · outs · live from the Omarchy bar</text>
+  <!-- Bar pill mocks, top right -->
+  <g transform="translate(796,46)">
+    <rect x="0" y="0" width="334" height="46" rx="8" fill="#0d130e" stroke="#2b3a2e" stroke-width="1.5"/>
+    <text x="16" y="30" font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="17" fill="#f0ead9">ATL 1-0 · T7 · 2-2, 0 out</text>
+    <circle cx="314" cy="23" r="5" fill="#c94f3d">
+      <animate attributeName="opacity" values="1;0.25;1" dur="1.6s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <g transform="translate(796,104)">
+    <rect x="0" y="0" width="334" height="46" rx="8" fill="#0d130e" stroke="#2b3a2e" stroke-width="1.5"/>
+    <text x="16" y="30" font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="17" fill="#c9c3b2">ATL @ CWS 1h 05m</text>
+  </g>
 
-  <!-- Sample pill, bottom right, echoing the live format -->
-  <g transform="translate(760,285)">
-    <rect x="0" y="-24" width="330" height="36" rx="6" fill="#161b23" stroke="#2e3d52" stroke-width="1.5"/>
-    <text x="14" y="1" font-family="'JetBrains Mono','DejaVu Sans Mono',monospace" font-size="20" fill="#d4864e">ATL 1-0 · T4 · 2-2, 0 out</text>
+  <!-- Bulb-scoreboard line score, bottom right: the widget's identity -->
+  <g transform="translate(796,182)">
+    <rect x="0" y="0" width="334" height="112" rx="6" fill="#0a100b" stroke="#2b3a2e" stroke-width="1.5"/>
+    <g font-family="'JetBrains Mono','Cascadia Mono',monospace" font-size="15" letter-spacing="2">
+      <text x="64" y="30" fill="#6f6b5e">1 2 3 4 5 6 7  R H E</text>
+      <text x="16" y="62" fill="#f0ead9" letter-spacing="0">ATL</text>
+      <text x="64" y="62" fill="#e8b04b">0 0 1 0 0 0 0  1 5 0</text>
+      <text x="16" y="94" fill="#f0ead9" letter-spacing="0">CWS</text>
+      <text x="64" y="94" fill="#e8b04b">0 0 0 0 0 0 -  0 0 1</text>
+    </g>
   </g>
 </svg>
