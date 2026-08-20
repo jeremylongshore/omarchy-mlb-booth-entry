@@ -11,6 +11,23 @@ from the same GUMBO feed the broadcast graphics run on.
 󰡒 ATL W 4-2               after it
 ```
 
+## Install
+
+```bash
+omarchy plugin add https://github.com/jeremylongshore/omarchy-mlb-booth-entry --enable
+```
+
+Then add **MLB Booth** to your bar layout (Omarchy menu, Bar, or
+`~/.config/omarchy/shell.json`) and pick your team in its settings.
+
+## Remove
+
+```bash
+omarchy plugin remove io.github.jeremylongshore.mlb-booth
+```
+
+## The panel
+
 Click the pill for the panel:
 
 - **Line score** by inning with R H E, plus bases, count, the live matchup,
