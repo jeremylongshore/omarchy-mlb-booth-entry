@@ -28,7 +28,7 @@ command -v jq >/dev/null 2>&1 || { echo "rig-verify: jq is required" >&2; exit 2
 # can never certify code nobody ran.
 fingerprint() {
   ( cd "$TARGET" && \
-    find . -maxdepth 2 \( -name '*.qml' -o -name 'manifest.json' \) \
+    find . -maxdepth 2 \( -name '*.qml' -o -name '*.js' -o -name 'manifest.json' \) \
       -not -path './.git/*' -not -path './tests/*' -print0 2>/dev/null \
     | LC_ALL=C sort -z | xargs -0 cat 2>/dev/null | sha256sum | cut -d' ' -f1 )
 }
