@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Run the Omarchy plugin gates before anything leaves this machine.
+#
+# CI is the backstop, but CI runs after the push, and a maintainer reading a
+# public repo is a worse place to discover a clipped panel or a token in an
+# argv than your own terminal thirty seconds earlier.
+#
+# Install once per clone: scripts/install-hooks.sh
+# Bypass in an emergency with: git push --no-verify
+set -uo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+[[ -x "$ROOT/scripts/run-plugin-gates.sh" ]] || exit 0
+
+echo "pre-push: running plugin gates"
+if ! "$ROOT/scripts/run-plugin-gates.sh" "$ROOT"; then
+  echo
+  echo "pre-push: BLOCKED. fix the findings above, or push with --no-verify if"
+  echo "you genuinely need to (and say so in the PR)."
+  exit 1
+fi

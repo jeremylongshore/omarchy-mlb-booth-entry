@@ -1,0 +1,14 @@
+name: gates
+on:
+  push:
+  pull_request:
+jobs:
+  plugin-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # jq is preinstalled on ubuntu-latest; assert it rather than assume, so a
+      # runner image change surfaces as a clear failure instead of a skipped gate.
+      - run: jq --version
+      - name: Omarchy plugin gates
+        run: scripts/run-plugin-gates.sh .
