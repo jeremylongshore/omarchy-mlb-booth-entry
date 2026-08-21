@@ -205,10 +205,14 @@ Panel {
     // the terminator a dash-prefixed base URL would parse as curl OPTIONS
     // (-o writes files, -K loads a config); aiUrlOk already rejects those,
     // and this makes the argv safe even if that check ever regresses.
+    // The key rides curl's STDIN via `--header @-`, never an argv element:
+    // a process command line is readable by any same-uid process for the life
+    // of the request, so an -H Authorization here would expose the user's key
+    // to `ps`. The header is written in recapProc.onStarted below.
     recapProc.command = [
       "curl", "-fsS", "--proto", "=https", "--max-time", "30", "--max-filesize", "1000000",
       "-H", "Content-Type: application/json",
-      "-H", "Authorization: Bearer " + aiApiKey,
+      "--header", "@-",
       "-d", body, "--", url
     ]
     recapProc.running = true
@@ -265,6 +269,14 @@ Panel {
 
   Process {
     id: recapProc
+    stdinEnabled: true
+    onStarted: {
+      // One write, then close stdin so curl stops waiting and sends. This is
+      // the same mechanism the first-party network panel uses to hand a wifi
+      // passphrase to a helper without putting it in an argv.
+      recapProc.write("Authorization: Bearer " + root.aiApiKey + "\n")
+      recapProc.stdinEnabled = false
+    }
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
