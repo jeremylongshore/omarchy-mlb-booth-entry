@@ -487,6 +487,7 @@ Panel {
                 Text {
                   text: root.gumbo.awayAbbr
                   textFormat: Text.PlainText
+                  width: Style.space(28)
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
@@ -495,6 +496,7 @@ Panel {
                 Text {
                   text: root.gumbo.homeAbbr
                   textFormat: Text.PlainText
+                  width: Style.space(28)
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
@@ -515,6 +517,7 @@ Panel {
                   Text {
                     text: String(modelData.n)
                     textFormat: Text.PlainText
+                    width: Style.space(16)
                     color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Color.muted
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.bodySmall
@@ -522,6 +525,7 @@ Panel {
                   Text {
                     text: modelData.away < 0 ? "-" : String(modelData.away)
                     textFormat: Text.PlainText
+                    width: Style.space(16)
                     color: root.bar ? root.bar.foreground : Color.foreground
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.bodySmall
@@ -529,6 +533,7 @@ Panel {
                   Text {
                     text: modelData.home < 0 ? "-" : String(modelData.home)
                     textFormat: Text.PlainText
+                    width: Style.space(16)
                     color: root.bar ? root.bar.foreground : Color.foreground
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.bodySmall
@@ -548,6 +553,7 @@ Panel {
                 Text {
                   text: root.gumbo.awayRuns + " " + root.gumbo.awayHits + " " + root.gumbo.awayErrors
                   textFormat: Text.PlainText
+                  width: Style.space(56)
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
@@ -556,6 +562,7 @@ Panel {
                 Text {
                   text: root.gumbo.homeRuns + " " + root.gumbo.homeHits + " " + root.gumbo.homeErrors
                   textFormat: Text.PlainText
+                  width: Style.space(56)
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
@@ -569,9 +576,12 @@ Panel {
             Text {
               anchors.left: parent.left
               anchors.leftMargin: Style.space(16)
+              anchors.right: parent.right
+              anchors.rightMargin: Style.space(16)
               text: Model.countText(root.gumbo.balls, root.gumbo.strikes) + ", "
                 + root.gumbo.outs + " out · On base: " + Model.basesText(root.gumbo.bases)
               textFormat: Text.PlainText
+              wrapMode: Text.WordWrap
               color: root.bar ? root.bar.foreground : Color.foreground
               font.family: root.bar ? root.bar.fontFamily : Style.font.family
               font.pixelSize: Style.font.body
@@ -581,8 +591,11 @@ Panel {
               visible: root.gumbo.batter !== ""
               anchors.left: parent.left
               anchors.leftMargin: Style.space(16)
+              anchors.right: parent.right
+              anchors.rightMargin: Style.space(16)
               text: "At bat: " + root.gumbo.batter + " · Pitching: " + root.gumbo.pitcher
               textFormat: Text.PlainText
+              wrapMode: Text.WordWrap
               color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Color.muted
               font.family: root.bar ? root.bar.fontFamily : Style.font.family
               font.pixelSize: Style.font.bodySmall
@@ -667,6 +680,9 @@ Panel {
                   anchors.left: parent.left
                   anchors.leftMargin: Style.space(16)
                   anchors.verticalCenter: parent.verticalCenter
+                  width: parent.width - Style.space(120)
+                  maximumLineCount: 1
+                  elide: Text.ElideRight
                   text: (modelData.isHome ? "vs " : "@ ")
                     + (modelData.isHome ? modelData.away.name : modelData.home.name)
                   textFormat: Text.PlainText
@@ -679,6 +695,10 @@ Panel {
                   anchors.right: parent.right
                   anchors.rightMargin: Style.space(16)
                   anchors.verticalCenter: parent.verticalCenter
+                  width: Style.space(90)
+                  horizontalAlignment: Text.AlignRight
+                  maximumLineCount: 1
+                  elide: Text.ElideRight
                   text: Qt.formatDateTime(new Date(modelData.startMs), "ddd HH:mm")
                   textFormat: Text.PlainText
                   color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Color.muted
@@ -734,6 +754,8 @@ Panel {
                   anchors.right: parent.right
                   anchors.rightMargin: Style.space(16) + Style.space(64)
                   anchors.verticalCenter: parent.verticalCenter
+                  width: Style.space(64)
+                  horizontalAlignment: Text.AlignRight
                   text: modelData.wins + "-" + modelData.losses
                   textFormat: Text.PlainText
                   color: root.bar ? Qt.darker(root.bar.foreground, isMine ? 1.0 : 1.3) : Color.muted

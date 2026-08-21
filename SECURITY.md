@@ -42,13 +42,23 @@ OpenAI-compatible completion endpoint of their choosing.
 ## BYOK key handling
 
 The optional API key lives in your local shell settings and rides an
-Authorization header on a curl invocation. curl takes that header as a
-process argument, so the key is briefly readable in the local process table
-while the request runs. Feeding it through a config file on stdin would
-avoid that; I judged the extra machinery not worth it for a request that
-fires a few times a day on a single-user desktop. Do not configure the key
-on a machine you share. Leaving the three AI values empty keeps the widget
-fully keyless with zero outbound traffic beyond statsapi.mlb.com.
+Authorization header that is written to curl over stdin, using
+`--header @-`. It is never an argv element, so it does not appear in the
+local process table and `ps` cannot read it. This is the same mechanism the
+first-party network panel uses for a wifi passphrase.
+
+An earlier version of this document described the opposite, because an
+earlier version of the code passed the key as `-H "Authorization: Bearer
+..."` and I argued the exposure was acceptable on a single-user desktop.
+That was wrong, the marketplace reviewer was right to flag it, and the code
+was corrected in 22642a4. The reasoning is left here rather than deleted
+because a security document that quietly rewrites its own history is worth
+less than one that shows where it was wrong.
+
+The key is still stored in plain text in your shell settings, so anyone
+running as your uid can read `shell.json` directly. Do not configure it on a
+machine you share. Leaving the three AI values empty keeps the widget fully
+keyless with zero outbound traffic beyond statsapi.mlb.com.
 
 ## Reporting
 
