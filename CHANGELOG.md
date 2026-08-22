@@ -6,6 +6,8 @@ Entries are derived from this repository's commit history, so every line
 corresponds to a real change. The format follows Keep a Changelog and the
 project uses Semantic Versioning.
 
+Regenerate with `scripts/gen-changelog.sh`.
+
 ## [Unreleased]
 
 Nothing yet.
@@ -42,3 +44,5 @@ Tooling and repository changes with no effect on the shipped plugin.
 - Vendor the submission gate lane, CI and a pre-push hook
 - Vendor c38 and widen the rig fingerprint to cover shipped .js
 - Vendor rig-render, which loads the plugin into a real shell
+- Add four-lane MiniMax review and backfill the changelog
+
