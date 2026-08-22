@@ -66,6 +66,17 @@ export SWAYSOCK=\$(ls \$XDG_RUNTIME_DIR/sway-ipc.*.sock 2>/dev/null | head -1)
 swaymsg output HEADLESS-1 resolution "\$RES" >/dev/null 2>&1
 
 pkill -f 'qs -p' 2>/dev/null; sleep 1
+# Purge EVERY directory that declares this module id, not just the one matching
+# our folder name. The rig accumulates installs from earlier runs and from the
+# omarchy CLI, which names its folder after the full id; a stale copy of the
+# same plugin then shadows the fresh one and the render shows old code while
+# reporting success. That cost a full debugging cycle: a redesign appeared not
+# to render at all because a directory named "pitwall" was still serving the
+# previous build alongside "pit-wall".
+for d in /root/.config/omarchy/plugins/*/; do
+  [ -f "\$d/manifest.json" ] || continue
+  if grep -q "\"\$MOD\"" "\$d/manifest.json" 2>/dev/null; then rm -rf "\$d"; fi
+done
 rm -rf /root/.config/omarchy/plugins/\$NAME
 mkdir -p /root/.config/omarchy/plugins/\$NAME
 tar xzf /tmp/rigrender.tgz -C /root/.config/omarchy/plugins/\$NAME
