@@ -1,0 +1,15 @@
+# Normalise line endings on the way in, so a contributor on Windows cannot turn
+# a one-line change into a whole-file diff.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.webp binary
+*.woff2 binary
+
+# Generated or vendored: excluded from language stats and collapsed in review,
+# because neither is human-authored change worth a reviewer's attention.
+scripts/gates/** linguist-vendored
+tests/fixtures/** linguist-generated
+.rig-proof.json linguist-generated
+CHANGELOG.md linguist-generated

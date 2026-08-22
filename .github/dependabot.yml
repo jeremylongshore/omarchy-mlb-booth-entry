@@ -1,0 +1,15 @@
+# Only GitHub Actions. This plugin ships no package dependencies at all: it runs
+# on Quickshell plus the curl the box already has, and node appears solely as a
+# devDependency-free test runner. The one supply-chain surface that DOES exist is
+# the actions in .github/workflows, which are SHA-pinned, so this keeps those
+# pins current instead of letting them rot at a commit nobody revisits.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
+    labels:
+      - dependencies
