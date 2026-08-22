@@ -694,11 +694,25 @@ Panel {
                 width: contentColumn.width
                 height: Style.space(22)
 
-                Text {
+                // Opponent colour, same rule as the standings table, so the
+                // schedule and the standings agree about who is who.
+                Rectangle {
+                  id: oppStripe
                   anchors.left: parent.left
                   anchors.leftMargin: Style.space(16)
                   anchors.verticalCenter: parent.verticalCenter
-                  width: parent.width - Style.space(120)
+                  width: Style.space(2)
+                  height: Style.space(12)
+                  radius: width / 2
+                  color: Qt.hsla(Model.clubHue(modelData.isHome
+                    ? modelData.away.name : modelData.home.name), 0.62, 0.55, 0.9)
+                }
+
+                Text {
+                  anchors.left: oppStripe.right
+                  anchors.leftMargin: Style.space(8)
+                  anchors.verticalCenter: parent.verticalCenter
+                  width: parent.width - Style.space(130)
                   maximumLineCount: 1
                   elide: Text.ElideRight
                   text: (modelData.isHome ? "vs " : "@ ")
@@ -751,9 +765,25 @@ Panel {
                 width: contentColumn.width
                 height: Style.space(20)
 
-                Text {
+                // Club colour, because that is how anyone who follows the sport
+                // reads a division table. Your own club also gets a brighter,
+                // taller stripe so the row you care about is findable without
+                // reading a single word.
+                Rectangle {
+                  id: clubStripe
                   anchors.left: parent.left
                   anchors.leftMargin: Style.space(16)
+                  anchors.verticalCenter: parent.verticalCenter
+                  width: Style.space(2)
+                  height: isMine ? Style.space(14) : Style.space(11)
+                  radius: width / 2
+                  color: Qt.hsla(Model.clubHue(modelData.name), 0.62, isMine ? 0.66 : 0.52,
+                                 isMine ? 1.0 : 0.85)
+                }
+
+                Text {
+                  anchors.left: clubStripe.right
+                  anchors.leftMargin: Style.space(8)
                   anchors.verticalCenter: parent.verticalCenter
                   text: modelData.rank + "  " + modelData.name
                   textFormat: Text.PlainText
@@ -762,7 +792,7 @@ Panel {
                   font.pixelSize: Style.font.bodySmall
                   font.bold: isMine
                   elide: Text.ElideRight
-                  width: parent.width - Style.space(140)
+                  width: parent.width - Style.space(150)
                 }
 
                 // Two right-anchored columns: every record lines up, and the

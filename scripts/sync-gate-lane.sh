@@ -27,12 +27,46 @@ git -C "$CANON_REPO" diff --quiet 2>/dev/null || DIRTY=" (DIRTY WORKTREE)"
 
 # Only the content gates apply to a plugin tree. c32/c33 need rig binaries and
 # gate_skip off-rig; c37 needs a rig round trip and is enforced at submission.
+# An explicit list, not a glob.
+#
+# A glob is wrong in both directions here. The first version enumerated decades
+# (c2x, c3x) and silently copied 8 gates instead of 9 when c40 was added. Widening
+# it to every two-digit gate then swept in c01 through c27, which are PR-flow
+# gates that expect a candidate markdown file and have no meaning against a
+# plugin tree.
+#
+# So the applicable set is written down. Adding a gate here is a deliberate act,
+# and the count assertion below turns any mismatch into a visible warning rather
+# than a quietly shorter lane.
+#
+# Deliberately excluded: c32 and c33 need rig binaries and gate_skip off-rig;
+# c37 needs a rig round trip and is enforced at submission time by the hook.
+APPLICABLE="c28 c29 c30 c31 c34 c35 c36 c38 c40"
+
 mkdir -p "$DEST/lib"
 copied=0
-for g in "$CANON"/c2[89]-*.sh "$CANON"/c3[01]-*.sh "$CANON"/c3[4-9]-*.sh; do
-  [[ -f "$g" ]] || continue
-  case "$(basename "$g")" in c32-*|c33-*|c37-*) continue ;; esac
-  cp -f "$g" "$DEST/" && copied=$((copied + 1))
+for id in $APPLICABLE; do
+  src=$(ls "$CANON/$id"-*.sh 2>/dev/null | head -1)
+  if [[ -z "$src" ]]; then
+    echo "sync-gate-lane: WARNING $id is listed as applicable but not present in canonical" >&2
+    continue
+  fi
+  cp -f "$src" "$DEST/" && copied=$((copied + 1))
+done
+# Any vendored gate that is no longer applicable must go, or the lane keeps
+# running a check the source of truth has retired.
+# Collect first, then delete. Removing inside the glob mutates the very list
+# being iterated, so the first run only pruned part of the set and the script
+# needed running twice to converge.
+STALE=""
+for f in "$DEST"/c*.sh; do
+  [[ -e "$f" ]] || continue
+  id=$(basename "$f" | cut -d- -f1)
+  case " $APPLICABLE " in *" $id "*) ;; *) STALE="$STALE $f" ;; esac
+done
+for f in $STALE; do
+  rm -f "$f"
+  echo "sync-gate-lane: removed retired $(basename "$f" | cut -d- -f1)"
 done
 cp -f "$CANON/lib/preamble.sh" "$DEST/lib/preamble.sh"
 
@@ -44,7 +78,11 @@ cp -f "$CANON/lib/preamble.sh" "$DEST/lib/preamble.sh"
     done )
 } > "$DEST/.lane-manifest"
 
-echo "sync-gate-lane: $copied gates + preamble synced from ${SHA:0:12}${DIRTY}"
+AVAIL=$(echo "$APPLICABLE" | wc -w)
+echo "sync-gate-lane: $copied of $AVAIL applicable gates + preamble synced from ${SHA:0:12}${DIRTY}"
+if [[ "$copied" -ne "$AVAIL" ]]; then
+  echo "sync-gate-lane: WARNING copied $copied but $AVAIL are listed applicable" >&2
+fi
 echo "sync-gate-lane: manifest written to scripts/gates/.lane-manifest"
 [[ -n "$DIRTY" ]] && echo "sync-gate-lane: WARNING canonical worktree is dirty; the recorded SHA does not describe what was copied" >&2
 exit 0

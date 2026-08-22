@@ -533,8 +533,37 @@ function parseRecap(raw) {
   return clean(content, 600)
 }
 
+// Baseball identity is colour too. A division table rendered in one grey asks a
+// reader to parse team names as text when every club has a cap colour they
+// recognise instantly, and the panel already knows which row is yours.
+//
+// Only the HUE comes from the club; saturation and lightness are fixed at the
+// call site, so the Cardinals read as red and the Dodgers as blue without a
+// hardcoded livery hex fighting whatever theme is actually running. Anything
+// unrecognised falls through to a stable hue derived from the name, so a
+// relocation or a new franchise is still distinct on the day it appears.
+function clubHue(name) {
+  var t = String(name || "").toLowerCase()
+  // Every pattern is anchored on a word boundary. Without that, "angel" matched
+  // inside "Los Angeles" and painted the Dodgers red, which is the kind of
+  // mistake a baseball fan notices in the first second.
+  //
+  // Nicknames are matched, never city names, because two clubs share a city and
+  // a third has the city of one in its own name.
+  if (/\bred sox\b|\bcardinals\b|\bbraves\b|\bphillies\b|\bangels\b|\bnationals\b|\breds\b/.test(t)) return 0.005
+  if (/\bdodgers\b|\bcubs\b|\bblue jays\b|\brays\b|\broyals\b|\bbrewers\b|\bmariners\b/.test(t)) return 0.60
+  if (/\byankees\b|\bpadres\b|\bwhite sox\b|\bmarlins\b/.test(t)) return 0.66
+  if (/\bgiants\b|\borioles\b|\bastros\b|\btigers\b|\bmets\b/.test(t)) return 0.07
+  if (/\bathletics\b|\bdiamondbacks\b|\bd-backs\b|\brockies\b/.test(t)) return 0.42
+  if (/\bpirates\b|\bguardians\b|\brangers\b|\btwins\b/.test(t)) return 0.14
+  var h = 0
+  for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 360
+  return h / 360
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
+    clubHue: clubHue,
     teamAbbrs: teamAbbrs,
     teamId: teamId,
     clean: clean,

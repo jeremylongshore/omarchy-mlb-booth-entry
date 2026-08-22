@@ -430,3 +430,35 @@ test("the manifest team picker cannot drift from the team table", () => {
   const field = manifest.barWidget.schema.find((f) => f.key === "team")
   assert.deepEqual(field.options, Model.teamAbbrs())
 })
+
+// --------------------------------------------------------------- club colour
+
+test("clubHue matches on nicknames, never on city names", () => {
+  // "angel" matched inside "Los Angeles" and painted the Dodgers red, which is
+  // the kind of mistake a baseball fan notices in the first second. Two clubs
+  // share a city and a third carries another club's city in its own name, so
+  // every pattern is anchored and every one of those cases is pinned here.
+  const cases = {
+    "St. Louis Cardinals": 0.005,
+    "Los Angeles Dodgers": 0.60,
+    "Los Angeles Angels": 0.005,
+    "New York Yankees": 0.66,
+    "New York Mets": 0.07,
+    "Chicago Cubs": 0.60,
+    "Chicago White Sox": 0.66,
+    "Boston Red Sox": 0.005,
+    "Cincinnati Reds": 0.005,
+    "San Francisco Giants": 0.07,
+    "Seattle Mariners": 0.60,
+  }
+  for (const [name, hue] of Object.entries(cases)) {
+    assert.equal(Model.clubHue(name), hue, name)
+  }
+})
+
+test("clubHue gives an unknown club a stable hue rather than one default", () => {
+  const a = Model.clubHue("Nashville Stars")
+  assert.ok(a >= 0 && a <= 1)
+  assert.equal(a, Model.clubHue("Nashville Stars"))
+  assert.notEqual(a, Model.clubHue("Portland Loggers"))
+})

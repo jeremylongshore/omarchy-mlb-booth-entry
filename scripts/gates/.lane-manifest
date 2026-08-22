@@ -1,5 +1,5 @@
 # Vendored gate lane. Regenerate with scripts/sync-gate-lane.sh — never hand-edit.
-# canonical: contributing-clanker@ba606d7554dd442eb1f98c44ab978a086aaab116
+# canonical: contributing-clanker@75f689be172ac4430e0e2c4bd070ee79084f66f9
 ff620ef8278ba4358d2893cd3488ce72024880946031c53d096d436f7df62452  c28-voice-no-dashes.sh
 73a46c5e3c6d27396efdd113e0d7c660b6c1d124f754766de35b29ad98ad5d9b  c29-private-names.sh
 1ef2be2afc48af5116250a3d1cabd6f2d52b00b005b0e4a39bf698545a8d85b2  c30-md-strikethrough.sh
@@ -8,4 +8,5 @@ ff620ef8278ba4358d2893cd3488ce72024880946031c53d096d436f7df62452  c28-voice-no-d
 31ae9612944806082f6f025929e14f6fb9263952ce2c35f104e232f10c73804c  c35-omarchy-runtime-dependency.sh
 c3feafe40ca8f4edf630ff3ffed2712c9f5d909539f636e7f6e1f0d33c690216  c36-omarchy-qml-overflow.sh
 c415ee8b83577f91cfd55cf9191bec7f7a3362d531e74a5fa06f9eaefb1e220f  c38-omarchy-ssrf-host-allowlist.sh
+e95b8e82c03cb42ed5ffcef0df4eeb52cd2713710215b3425760fa62a376c8b4  c40-omarchy-panel-design.sh
 1c51b16fe0673e389e5b3c3b1b0f062c5c85eb038151e257a21beab2ae4b4154  lib/preamble.sh

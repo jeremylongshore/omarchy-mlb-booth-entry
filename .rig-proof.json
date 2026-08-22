@@ -1,8 +1,8 @@
 {
-  "fingerprint": "07e6bb4cf7043599f9a0fb4bf8e4339b3957d6f9c584025fe3fd80859c387f96",
+  "fingerprint": "b0993d4e8e0ae7b2b772f92c9c3d1fe9f2174d9ed5349db2ff78f2f46ff6f22b",
   "rig": "intent-ops-buzz/omarchy-rig",
   "omarchyPluginValidate": 0,
   "qmllintErrors": 0,
-  "validatedAtEpoch": 1787376164,
-  "validatedAt": "2026-08-22T05:22:44Z"
+  "validatedAtEpoch": 1787380700,
+  "validatedAt": "2026-08-22T06:38:20Z"
 }
