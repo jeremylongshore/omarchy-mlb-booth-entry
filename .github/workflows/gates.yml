@@ -12,3 +12,16 @@ jobs:
       - run: jq --version
       - name: Omarchy plugin gates
         run: scripts/run-plugin-gates.sh .
+      # run-plugin-gates.sh proves the vendored lane matches its own manifest.
+      # It cannot prove canonical has not moved on, and that is the gap that bit
+      # us: on 2026-08-21 every plugin repo carried a c36 older than canonical,
+      # and one repo's CI reported PASS on a tree the canonical gate blocked
+      # with three findings while that plugin was already listed.
+      #
+      # This step needs network, so it is separate. It is non-blocking on
+      # purpose: a GitHub blip must not fail an unrelated PR, because a check
+      # that cries wolf is a check people learn to ignore, which is how the
+      # original drift survived. It is loud in the log and nothing else.
+      - name: Gate lane freshness vs canonical (advisory)
+        continue-on-error: true
+        run: scripts/check-lane-freshness.sh

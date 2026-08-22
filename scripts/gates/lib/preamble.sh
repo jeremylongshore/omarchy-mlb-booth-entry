@@ -99,10 +99,12 @@ gate_resolve_tree() {
 # on the path. full mode: git-tracked files (fallback: find, .git excluded).
 # diff mode: files added or modified vs the base branch.
 # Usage: gate_tree_files '\.(md|json|svg)$'
-# scripts/gates/** is excluded: that directory holds the enforcement tooling
-# itself, and a detector's own source necessarily contains examples of the
-# pattern it hunts for. Without this, c34 flags its own shell-injection
-# example and the gate lane fails on a repo whose plugin code is clean.
+# scripts/gates/** is excluded: a candidate repo may vendor this gate lane so
+# its checks run in its own CI (enforcement travels with the code). That puts
+# the detectors inside the tree they scan, and a detector's source necessarily
+# contains examples of the pattern it hunts, so c34 flags its own
+# shell-injection example. Observed on omarchy-widget-template, whose first
+# gated CI run failed on gate source while its plugin code was clean.
 gate_tree_files() {
   local pat="$1"
   [[ -n "$GATE_TREE_DIR" ]] || return 0

@@ -384,6 +384,11 @@ Panel {
                   return (s.mine.name + (root.gameState.game.isHome ? " VS " : " AT ") + s.theirs.name).toUpperCase()
                 }
                 textFormat: Text.PlainText
+                // Team names come from the MLB Stats API, so the hero line is
+                // not authored text. heroCol is anchored left and right, so its
+                // width is the frame this must stay inside.
+                width: heroCol.width
+                elide: Text.ElideRight
                 color: root.bar ? root.bar.foreground : Color.foreground
                 font.family: root.bar ? root.bar.fontFamily : Style.font.family
                 font.pixelSize: Style.font.title
@@ -399,6 +404,8 @@ Panel {
                   return root.gameState.game.detail.toUpperCase()
                 }
                 textFormat: Text.PlainText
+                width: heroCol.width
+                elide: Text.ElideRight
                 color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Color.muted
                 font.family: root.bar ? root.bar.fontFamily : Style.font.family
                 font.pixelSize: Style.font.caption
@@ -443,6 +450,10 @@ Panel {
                       return root.gumbo.inningState + " " + root.gumbo.inningOrdinal
                     return ""
                   }
+                  // Sits in a Row beside the LIVE badge inside heroCol, so the
+                  // column width is the only hard frame available here.
+                  width: Math.min(implicitWidth, heroCol.width)
+                  elide: Text.ElideRight
                   textFormat: Text.PlainText
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
@@ -488,6 +499,7 @@ Panel {
                   text: root.gumbo.awayAbbr
                   textFormat: Text.PlainText
                   width: Style.space(28)
+                  elide: Text.ElideRight
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
@@ -497,6 +509,7 @@ Panel {
                   text: root.gumbo.homeAbbr
                   textFormat: Text.PlainText
                   width: Style.space(28)
+                  elide: Text.ElideRight
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
@@ -518,6 +531,7 @@ Panel {
                     text: String(modelData.n)
                     textFormat: Text.PlainText
                     width: Style.space(16)
+                    elide: Text.ElideRight
                     color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Color.muted
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.bodySmall
@@ -526,6 +540,7 @@ Panel {
                     text: modelData.away < 0 ? "-" : String(modelData.away)
                     textFormat: Text.PlainText
                     width: Style.space(16)
+                    elide: Text.ElideRight
                     color: root.bar ? root.bar.foreground : Color.foreground
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.bodySmall
@@ -534,6 +549,7 @@ Panel {
                     text: modelData.home < 0 ? "-" : String(modelData.home)
                     textFormat: Text.PlainText
                     width: Style.space(16)
+                    elide: Text.ElideRight
                     color: root.bar ? root.bar.foreground : Color.foreground
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.bodySmall
@@ -554,6 +570,7 @@ Panel {
                   text: root.gumbo.awayRuns + " " + root.gumbo.awayHits + " " + root.gumbo.awayErrors
                   textFormat: Text.PlainText
                   width: Style.space(56)
+                  elide: Text.ElideRight
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
@@ -563,6 +580,7 @@ Panel {
                   text: root.gumbo.homeRuns + " " + root.gumbo.homeHits + " " + root.gumbo.homeErrors
                   textFormat: Text.PlainText
                   width: Style.space(56)
+                  elide: Text.ElideRight
                   color: root.bar ? root.bar.foreground : Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
@@ -755,6 +773,7 @@ Panel {
                   anchors.rightMargin: Style.space(16) + Style.space(64)
                   anchors.verticalCenter: parent.verticalCenter
                   width: Style.space(64)
+                  elide: Text.ElideRight
                   horizontalAlignment: Text.AlignRight
                   text: modelData.wins + "-" + modelData.losses
                   textFormat: Text.PlainText
@@ -769,6 +788,7 @@ Panel {
                   anchors.rightMargin: Style.space(16)
                   anchors.verticalCenter: parent.verticalCenter
                   width: Style.space(60)
+                  elide: Text.ElideRight
                   horizontalAlignment: Text.AlignRight
                   text: modelData.gb === "-" ? "" : modelData.gb + " back"
                   textFormat: Text.PlainText
