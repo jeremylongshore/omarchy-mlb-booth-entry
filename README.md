@@ -13,6 +13,8 @@ ATL 1-0 · T4 · 2-2, 0 out     during it
 ATL W 4-2                     after it
 ```
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U5S225PTME)
+
 ## Install
 
 ```bash
