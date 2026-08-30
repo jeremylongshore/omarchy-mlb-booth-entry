@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "author": "Jeremy Longshore",
   "license": "MIT",
-  "description": "Deep live MLB for the Omarchy bar. Pick any of the 30 clubs; the pill carries score, half inning, count, and outs from the same GUMBO feed MLB's own Gameday runs on. Free, keyless data from the MLB Stats API.",
+  "description": "MLB Booth makes your chosen club legible at a glance: first-pitch countdown between games, then score, inning, count, outs, bases, and last play while live. Open the panel for a local-time schedule, division race, and line score. It reads the free, keyless MLB Stats API: schedule and standings every 15 minutes, Gameday every 20 seconds only during a game. Optional bring-your-own-key recaps are off by default. It never posts, needs no league account, and sends no settings unless you enable recap.",
   "kinds": [
     "bar-widget"
   ],
@@ -14,7 +14,7 @@
   },
   "barWidget": {
     "displayName": "MLB Booth",
-    "description": "Counts down to first pitch, then goes live: score, half inning, count, and outs, refreshed every 20 seconds. The panel adds the line score, bases, matchup, last play, the week's schedule, and the division race.",
+    "description": "MLB Booth makes your chosen club legible at a glance: first-pitch countdown between games, then score, inning, count, outs, bases, and last play while live. Open the panel for a local-time schedule, division race, and line score. It reads the free, keyless MLB Stats API: schedule and standings every 15 minutes, Gameday every 20 seconds only during a game. Optional bring-your-own-key recaps are off by default. It never posts, needs no league account, and sends no settings unless you enable recap.",
     "category": "Info",
     "aliases": [
       "mlb",
