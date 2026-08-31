@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "author": "Jeremy Longshore",
   "license": "MIT",
-  "description": "MLB Booth makes your chosen club legible at a glance: first-pitch countdown between games, then score, inning, count, outs, bases, and last play while live. Open the panel for a local-time schedule, division race, and line score. It reads the free, keyless MLB Stats API: schedule and standings every 15 minutes, Gameday every 20 seconds only during a game. Optional bring-your-own-key recaps are off by default. It never posts, needs no league account, and sends no settings unless you enable recap.",
+  "description": "MLB Booth makes your chosen club legible at a glance: first-pitch countdowns before games, then score and inning, count, outs, bases, and last play while live. Panel: local schedule, division race, and line score. It reads the keyless MLB Stats API: schedule and standings every 15 minutes, Gameday every 20 seconds only during a game. MLB requests use the selected club and public game data, not an account or identifying data. Optional bring-your-own-key recaps are off by default and post nothing.",
   "kinds": [
     "bar-widget"
   ],
@@ -14,7 +14,7 @@
   },
   "barWidget": {
     "displayName": "MLB Booth",
-    "description": "MLB Booth makes your chosen club legible at a glance: first-pitch countdown between games, then score, inning, count, outs, bases, and last play while live. Open the panel for a local-time schedule, division race, and line score. It reads the free, keyless MLB Stats API: schedule and standings every 15 minutes, Gameday every 20 seconds only during a game. Optional bring-your-own-key recaps are off by default. It never posts, needs no league account, and sends no settings unless you enable recap.",
+    "description": "MLB Booth makes your chosen club legible at a glance: first-pitch countdowns before games, then score and inning, count, outs, bases, and last play while live. Panel: local schedule, division race, and line score. It reads the keyless MLB Stats API: schedule and standings every 15 minutes, Gameday every 20 seconds only during a game. MLB requests use the selected club and public game data, not an account or identifying data. Optional bring-your-own-key recaps are off by default and post nothing.",
     "category": "Info",
     "aliases": [
       "mlb",

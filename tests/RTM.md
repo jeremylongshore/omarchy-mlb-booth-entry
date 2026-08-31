@@ -7,7 +7,7 @@
 | Show local schedule and division race | `Panel.qml`, team/division tables | All clubs, all divisions, schedule ordering, standings ordering and fallback tests | Marketplace-scale visual inspection |
 | Bound public API reads | `Panel.qml`, parser size guards | Oversized-body tests, C31, C42 | Buzz process and shell-log evidence |
 | Keep optional recap disabled and bounded | `Panel.qml`, recap helpers | Exact request prompt/body, response variants, malformed and oversized tests | Optional manual endpoint test only; never CI |
-| Avoid posting, accounts, and telemetry | Read-only fetch paths and manifest copy | C29, C31, C34, C38 and copy contract | Maintainer security review |
+| Send only selected-club/public-game context to MLB; avoid accounts, identifying data, posting, and telemetry | Read-only fetch paths and manifest copy | C29, C31, C34, C38 and copy contract | Maintainer security review |
 | Explain the product within marketplace allowance | `manifest.json` | Exact 500/500 equality and claim-presence test | Live marketplace refresh after final SHA |
 | Present a distinct baseball identity | `assets/banner.svg`, `Panel.qml` | Banner semantic test and C40 panel-design pass | Current 1280x720 Buzz preview plus approval |
 | Reject stale or fabricated render evidence | rig scripts, C43 | Provenance/approval contract test and C43 fail-closed behavior | Clean `.rig-proof.json` and `.render-proof.json` for candidate tree |

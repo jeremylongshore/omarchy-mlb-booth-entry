@@ -10,7 +10,8 @@ the same product promise.
 - `assets/banner.svg` identifies MLB Booth and depicts baseball-specific state.
 - `preview.png` is accepted only with current-tree Buzz provenance, an exact
   1280x720 capture, a clean shell-log hash, and explicit visual approval.
-- The plugin reads public MLB data and performs no league-account writes.
+- MLB requests contain the selected club and public game data, not league
+  account or identifying data, and the plugin performs no posting action.
 - Optional recap requests remain disabled until the user supplies and enables
   their own compatible endpoint credentials.
 

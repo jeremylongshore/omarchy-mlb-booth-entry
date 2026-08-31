@@ -12,7 +12,12 @@ test("marketplace copy uses all 500 characters for the shipped baseball story", 
   assert.equal(manifest.description.length, 500)
   assert.equal(manifest.barWidget.description.length, 500)
   assert.equal(manifest.description, manifest.barWidget.description)
-  for (const claim of ["first-pitch countdown", "count, outs, bases", "local-time schedule", "division race", "every 15 minutes", "every 20 seconds", "off by default", "no league account"]) assert.match(manifest.description, new RegExp(claim))
+  for (const claim of [
+    "first-pitch countdowns", "score and inning, count, outs, bases, and last play",
+    "local schedule, division race, and line score", "keyless MLB Stats API",
+    "every 15 minutes", "Gameday every 20 seconds", "selected club and public game data",
+    "not an account or identifying data", "recaps are off by default", "post nothing"
+  ]) assert.match(manifest.description, new RegExp(claim))
 })
 
 test("banner names and illustrates MLB Booth rather than a generic widget", () => {
