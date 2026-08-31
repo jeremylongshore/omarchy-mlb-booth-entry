@@ -1,0 +1,13 @@
+{
+  "fingerprint": "e4b3e956934bee8036af3443eff70b058581630d1a0bb0d93ffb91f06ef04c48",
+  "sourceCommit": "a1982fe96129190533164800f59fb601217f3cab",
+  "sourceDirty": false,
+  "sourcePackageSha256": "c5b43362e28cd6b86b41786bc4fef4e87f731f0caead2b61ed1cc8a11885db42",
+  "remotePackageSha256": "c5b43362e28cd6b86b41786bc4fef4e87f731f0caead2b61ed1cc8a11885db42",
+  "rig": "intent-ops-buzz/omarchy-rig",
+  "evidenceBoundary": "real Omarchy validator and qmllint; no live compositor render",
+  "omarchyPluginValidate": 0,
+  "qmllintErrors": 0,
+  "validatedAtEpoch": 1788214106,
+  "validatedAt": "2026-08-31T22:08:26Z"
+}

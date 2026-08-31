@@ -1,0 +1,27 @@
+{
+  "fingerprint": "1d1436fd800f5102d50a6a7feca8b90218bd28181f090ff55f57713a027b46cb",
+  "sourceCommit": "a1982fe96129190533164800f59fb601217f3cab",
+  "sourceDirty": false,
+  "sourcePackageSha256": "c7d0b6a2d2a0b24ac8f72456f9d88db1a812dae2b37bcf2d97040d38c7069ec5",
+  "remotePackageSha256": "c7d0b6a2d2a0b24ac8f72456f9d88db1a812dae2b37bcf2d97040d38c7069ec5",
+  "rig": "intent-ops-buzz/omarchy-rig",
+  "runId": "mlb-booth-3226912",
+  "rawShellLogSha256": "0189638fdb78fcdbd15132f67d5b66153628d266be4627627837a5737650efa6",
+  "packageBoundary": "runtime tree; generated proof receipts, reports, tests, developer scripts, and marketplace preview excluded",
+  "evidenceBoundary": "isolated real Omarchy shell and QML under a dedicated headless compositor; plugin-specific fixture hook when present; live plugin IPC toggle; direct full-frame grim capture with no crop or image post-processing",
+  "visualInspection": {
+    "status": "approved",
+    "previewSha256": "f999112cab922b0a42ab8b5c92694638bcd968792bce021c4074291019593c47",
+    "inspector": "jeremylongshore",
+    "inspectedAt": "2026-08-31T22:09:19Z",
+    "checks": [
+      "product value visible at marketplace scale",
+      "no primary content clipped",
+      "plugin-specific visual identity"
+    ]
+  },
+  "previewSha256": "f999112cab922b0a42ab8b5c92694638bcd968792bce021c4074291019593c47",
+  "dimensions": "1280 x 720",
+  "nonblackCoverage": 0.376807,
+  "capturedAt": "2026-08-31T22:09:06Z"
+}
