@@ -1,0 +1,24 @@
+# Enforcement and evidence surfaces not covered by audit-harness 1.3.1 defaults.
+.harness-hash-extra-patterns
+.audit-harness.yml
+.github/workflows/*.yml
+.githooks/pre-push
+package.json
+scripts/run-plugin-gates.sh
+scripts/sync-gate-lane.sh
+scripts/check-lane-freshness.sh
+scripts/rig-verify.sh
+scripts/rig-render.sh
+scripts/gates/.lane-manifest
+scripts/gates/*.sh
+scripts/gates/lib/preamble.sh
+e2e/*.sh
+e2e/*.json
+e2e/bin/*
+tests/*.test.js
+tests/TESTING.md
+tests/RTM.md
+tests/PERSONAS.md
+tests/JOURNEYS.md
+contracts/*.md
+stryker.config.json

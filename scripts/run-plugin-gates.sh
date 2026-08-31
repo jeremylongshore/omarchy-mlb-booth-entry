@@ -62,25 +62,66 @@ INPUT="$(jq -nc --arg c "$TARGET" '{candidate:$c, action:"omarchy-submit", env:{
 blocked=0
 pass=0
 for gate in "$GATES"/c*.sh; do
-  verdict="$(printf '%s' "$INPUT" | bash "$gate" 2>/dev/null)"
-  # A gate that emits nothing has crashed hard. Fail closed rather than
-  # silently counting it as clean, which is how a broken gate becomes theater.
-  if [[ -z "$verdict" ]]; then
-    printf '  %-6s CRASH  no verdict emitted\n' "$(basename "$gate" .sh | cut -d- -f1 | tr a-z A-Z)"
+  label="$(basename "$gate" .sh | cut -d- -f1 | tr '[:lower:]' '[:upper:]')"
+  # Feed the small JSON envelope with a here-string. A pipe lets a gate that
+  # exits before reading stdin race the producer into SIGPIPE (141), turning a
+  # deterministic invalid-verdict check into an intermittent gate crash.
+  verdict="$(bash "$gate" 2>/dev/null <<< "$INPUT")"
+  gate_rc=$?
+  # Gate scripts communicate through one JSON object and normally exit zero.
+  # A non-zero exit remains a crash even if the script happened to print a
+  # plausible PASS object before dying.
+  if [[ "$gate_rc" -ne 0 ]]; then
+    printf '  %-6s CRASH  gate exited %s\n' "$label" "$gate_rc"
     blocked=1
     continue
   fi
-  sev="$(printf '%s' "$verdict" | jq -r '.severity // "CRASH"')"
-  id="$(printf '%s' "$verdict" | jq -r '.gate // "?"')"
-  reason="$(printf '%s' "$verdict" | jq -r '.reason // ""')"
+  # A gate that emits nothing has crashed hard. Fail closed rather than
+  # silently counting it as clean, which is how a broken gate becomes theater.
+  if [[ -z "$verdict" ]]; then
+    printf '  %-6s CRASH  no verdict emitted\n' "$label"
+    blocked=1
+    continue
+  fi
+  # Parse the complete stream as exactly one schema-valid object. Plain `jq -r
+  # .severity` is fail-open here: malformed JSON, two concatenated verdicts,
+  # an array, or a new/unknown severity all produce a value the case statement
+  # ignores, leaving blocked=0 and printing PASS. Invalid gate output is a gate
+  # crash, never an unrecognised clean state.
+  normalized="$(printf '%s' "$verdict" | jq -cse '
+    if length == 1 then .[0] else error("invalid gate verdict count") end
+    | if type == "object"
+         and (.severity | type == "string")
+         and (.severity as $severity
+              | ["PASS","WARN","BLOCK","INFORM","SKIP"]
+              | index($severity) != null)
+         and (.gate | type == "string" and length > 0)
+         and (.reason | type == "string")
+      then .
+      else error("invalid gate verdict schema")
+      end' 2>/dev/null)"
+  if [[ $? -ne 0 || -z "$normalized" ]]; then
+    printf '  %-6s CRASH  invalid verdict (expected one schema-valid JSON object)\n' "$label"
+    blocked=1
+    continue
+  fi
+  sev="$(printf '%s' "$normalized" | jq -r '.severity')"
+  id="$(printf '%s' "$normalized" | jq -r '.gate')"
+  reason="$(printf '%s' "$normalized" | jq -r '.reason')"
   printf '  %-6s %-6s %s\n' "$id" "$sev" "$reason"
   case "$sev" in
     BLOCK|CRASH)
       blocked=1
-      hint="$(printf '%s' "$verdict" | jq -r '.fix_hint // ""')"
+      hint="$(printf '%s' "$normalized" | jq -r '.fix_hint // ""')"
       [[ -n "$hint" ]] && printf '         fix: %s\n' "$hint"
       ;;
     PASS) pass=$((pass + 1)) ;;
+    WARN|INFORM|SKIP) ;;
+    *)
+      # The schema check above makes this unreachable. Keep the default
+      # fail-closed so widening the schema later cannot silently widen policy.
+      blocked=1
+      ;;
   esac
 done
 

@@ -36,11 +36,18 @@ fingerprint() {
     | LC_ALL=C sort -z | xargs -0 cat 2>/dev/null | sha256sum | cut -d' ' -f1 )
 }
 FP="$(fingerprint)"
+SOURCE_COMMIT="$(git -C "$TARGET" rev-parse HEAD 2>/dev/null || printf unknown)"
+SOURCE_DIRTY=false
+if [[ "$SOURCE_COMMIT" == "unknown" ]] || \
+   [[ -n "$(git -C "$TARGET" status --porcelain --untracked-files=all -- '*.qml' '*.js' manifest.json bin 2>/dev/null)" ]]; then
+  SOURCE_DIRTY=true
+fi
 
 TGZ="$(mktemp -t rigcheck-XXXXXX.tgz)"
 trap 'rm -f "$TGZ"' EXIT
 tar czf "$TGZ" -C "$TARGET" --exclude=.git --exclude=tests --exclude=node_modules . || {
   echo "rig-verify: could not package the tree" >&2; exit 2; }
+ARCHIVE_SHA="$(sha256sum "$TGZ" | cut -d' ' -f1)"
 
 echo "rig-verify: shipping to $HOST/$CONTAINER"
 scp -q "$TGZ" "$HOST:/tmp/$NAME.tgz" || { echo "rig-verify: cannot reach $HOST" >&2; exit 2; }
@@ -67,27 +74,34 @@ RESULT="$(ssh "$HOST" "
   # linter could not even read.
   Q=\$(docker exec $CONTAINER sh -c 'cd /tmp/$NAME || exit 9; out=\$(/usr/lib/qt6/bin/qmllint *.qml 2>&1); rc=\$?; n=\$(printf %s\\\\n \"\$out\" | grep -cE \"^Error\" || true); if [ \"\$rc\" -ne 0 ] && [ \"\$n\" -eq 0 ]; then n=1; fi; echo \"\$n\"' 2>/dev/null)
   case \"\$Q\" in ''|*[!0-9]*) Q=1 ;; esac
+  R=\$(docker exec $CONTAINER sha256sum /tmp/$NAME.tgz 2>/dev/null | awk '{print \$1}')
   docker exec $CONTAINER rm -rf /tmp/$NAME /tmp/$NAME.tgz >/dev/null 2>&1
   rm -f /tmp/$NAME.tgz
-  echo \"\$V \$Q\"
+  echo \"\$V \$Q \$R\"
 ")" || { echo "rig-verify: rig run failed" >&2; exit 2; }
 
 # Read ONLY the receipt line. Anything else the remote emitted is noise, and
 # silently letting it shift the fields is how a pass got recorded as a failure.
 VALIDATE="$(echo "$RESULT" | tail -n1 | awk '{print $1}')"
 QMLLINT="$(echo "$RESULT" | tail -n1 | awk '{print $2}')"
+REMOTE_SHA="$(echo "$RESULT" | tail -n1 | awk '{print $3}')"
 [[ "$VALIDATE" =~ ^[0-9]+$ ]] || VALIDATE=1
 [[ "$QMLLINT"  =~ ^[0-9]+$ ]] || QMLLINT=1
+[[ "$REMOTE_SHA" == "$ARCHIVE_SHA" ]] || VALIDATE=1
 
 echo "  omarchy-plugin-validate: exit $VALIDATE"
 echo "  qmllint errors:          $QMLLINT"
 
 # Write the receipt even on failure. C37 reads the recorded results and blocks
 # on a non-zero one, so a failing run must not look identical to never running.
-jq -n --arg fp "$FP" --arg rig "$HOST/$CONTAINER" \
+jq -n --arg fp "$FP" --arg commit "$SOURCE_COMMIT" --argjson dirty "$SOURCE_DIRTY" \
+      --arg archive "$ARCHIVE_SHA" --arg remote "$REMOTE_SHA" --arg rig "$HOST/$CONTAINER" \
       --argjson v "$VALIDATE" --argjson q "$QMLLINT" \
       --argjson at "$(date +%s)" --arg iso "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  '{fingerprint:$fp, rig:$rig, omarchyPluginValidate:$v, qmllintErrors:$q,
+  '{fingerprint:$fp, sourceCommit:$commit, sourceDirty:$dirty,
+    sourcePackageSha256:$archive, remotePackageSha256:$remote, rig:$rig,
+    evidenceBoundary:"real Omarchy validator and qmllint; no live compositor render",
+    omarchyPluginValidate:$v, qmllintErrors:$q,
     validatedAtEpoch:$at, validatedAt:$iso}' > "$TARGET/.rig-proof.json"
 
 if [[ "$VALIDATE" -ne 0 || "$QMLLINT" -ne 0 ]]; then

@@ -462,3 +462,316 @@ test("clubHue gives an unknown club a stable hue rather than one default", () =>
   assert.equal(a, Model.clubHue("Nashville Stars"))
   assert.notEqual(a, Model.clubHue("Portland Loggers"))
 })
+
+// ---- defensive API-shape and display fallbacks ---------------------------
+
+test("team and display helpers handle empty and uncommon values", () => {
+  assert.equal(Model.teamId(null), 0)
+  assert.equal(Model.basesText(null), "Empty")
+  assert.equal(Model.inningTag(null), "")
+  assert.equal(Model.inningTag({ inning: 7, inningState: "End" }), "E7")
+  assert.equal(Model.inningTag({ inning: 8, inningState: "", isTop: true }), "T8")
+  assert.equal(Model.inningTag({ inning: 9, inningState: "", isTop: false }), "B9")
+  assert.equal(Model.countdown(10 * 60000), "10m")
+  assert.equal(Model.countdown(60 * 60000), "1h 00m")
+})
+
+test("parseSchedule tolerates sparse dates, games, statuses, teams, and scores", () => {
+  const raw = JSON.stringify({ dates: [
+    {},
+    { games: [
+      { gamePk: "7", gameDate: "bad-date" },
+      {
+        gamePk: "8",
+        gameDate: "2026-08-21T18:00:00Z",
+        teams: {
+          home: { team: { id: "144", abbreviation: "ATL", name: "Atlanta" }, score: null },
+          away: null
+        }
+      }
+    ] }
+  ] })
+  const games = Model.parseSchedule(raw, ATL)
+  assert.equal(games.length, 1)
+  assert.equal(games[0].state, "pre")
+  assert.equal(games[0].detail, "")
+  assert.deepEqual(games[0].home, { id: 144, abbr: "ATL", name: "Atlanta", score: -1 })
+  assert.deepEqual(games[0].away, { id: 0, abbr: "", name: "", score: -1 })
+  assert.equal(games[0].isHome, true)
+})
+
+test("parseGumbo fills a safe model when optional live-feed fields are absent", () => {
+  const raw = JSON.stringify({ gameData: {}, liveData: {} })
+  const g = Model.parseGumbo(raw)
+  assert.equal(g.valid, true)
+  assert.equal(g.state, "")
+  assert.equal(g.awayAbbr, "")
+  assert.equal(g.homeAbbr, "")
+  assert.equal(g.inning, 0)
+  assert.deepEqual(g.bases, { first: false, second: false, third: false })
+  assert.equal(g.batter, "")
+  assert.equal(g.pitcher, "")
+  assert.deepEqual(g.innings, [])
+})
+
+test("parseGumbo maps bottom-half zeroes, fallback counts, and sparse innings", () => {
+  const raw = JSON.stringify({
+    gameData: { status: { abstractGameState: "Live" }, teams: {
+      away: { abbreviation: "ATL" }, home: { abbreviation: "CWS" }
+    } },
+    liveData: {
+      linescore: {
+        currentInning: 2,
+        currentInningOrdinal: "2nd",
+        inningState: "Bottom",
+        isTopInning: false,
+        balls: 1, strikes: 2, outs: 1,
+        offense: { first: {}, third: {} },
+        teams: { away: { runs: 2 }, home: { runs: 1, hits: 3, errors: 0 } },
+        innings: [{}, { num: 2, away: { runs: 1 }, home: {} }]
+      },
+      plays: { currentPlay: { matchup: {
+        batter: { fullName: "Next Batter" }, pitcher: { fullName: "Pitcher" }
+      } }, allPlays: [{ about: { isComplete: true }, result: {} }] }
+    }
+  })
+  const g = Model.parseGumbo(raw)
+  assert.equal(g.state, "Live")
+  assert.equal(g.innings[0].n, 1)
+  assert.deepEqual(g.innings[1], { n: 2, away: 1, home: 0 })
+  assert.deepEqual(g.bases, { first: true, second: false, third: true })
+  assert.equal(Model.countText(g.balls, g.strikes), "1-2")
+  assert.equal(g.batter, "Next Batter")
+  assert.equal(g.lastPlay, "")
+})
+
+test("pillText prefers home-team GUMBO runs during a live home game", () => {
+  const game = mkGame({
+    state: "live", isHome: true,
+    home: { id: ATL, abbr: "ATL", name: "Braves", score: 0 },
+    away: { id: 145, abbr: "CWS", name: "White Sox", score: 0 }
+  })
+  const gumbo = Object.assign(Model.emptyGumbo(), {
+    valid: true, inning: 5, inningState: "Bottom",
+    homeRuns: 4, awayRuns: 2, balls: 0, strikes: 1, outs: 2
+  })
+  assert.equal(Model.pillText({ status: "live", game }, ATL, gumbo), "ATL 4-2 · B5 · 0-1, 2 out")
+})
+
+test("parseStandings handles oversized, unknown, unrelated, and sparse divisions", () => {
+  assert.deepEqual(Model.parseStandings(" ".repeat(4000001), ATL), { division: "", rows: [] })
+  const unrelated = JSON.stringify({ records: [{ teamRecords: [{ team: { id: 1 } }] }] })
+  assert.deepEqual(Model.parseStandings(unrelated, ATL), { division: "", rows: [] })
+
+  const sparse = JSON.stringify({ records: [{
+    division: { id: 999 },
+    teamRecords: [
+      { team: { id: ATL } },
+      { divisionRank: "1", wins: "2", losses: "3", gamesBack: "0", streak: {} }
+    ]
+  }] })
+  const parsed = Model.parseStandings(sparse, ATL)
+  assert.equal(parsed.division, "")
+  assert.deepEqual(parsed.rows, [
+    { rank: 1, id: 144, name: "", wins: 0, losses: 0, gb: "-", streak: "" },
+    { rank: 1, id: 0, name: "", wins: 2, losses: 3, gb: "0", streak: "" }
+  ])
+})
+
+test("recapContext covers unknown clubs, ordinal ranks, and both venues", () => {
+  for (const [rank, suffix] of [[2, "2nd"], [3, "3rd"], [4, "4th"]]) {
+    const standings = { division: "NL East", rows: [
+      { id: ATL, rank, wins: 70, losses: 50, gb: "1.0", streak: "" }
+    ] }
+    assert.match(Model.recapContext("ATL", null, standings, [], DURING_GAME_MS), new RegExp(suffix))
+  }
+
+  const homeNext = mkGame({ state: "pre", startMs: DURING_GAME_MS + 3600000, isHome: true })
+  const roadNext = mkGame({ state: "pre", startMs: DURING_GAME_MS + 7200000, isHome: false })
+  assert.match(Model.recapContext("EXP", null, null, [homeNext], DURING_GAME_MS), /Team: EXP/)
+  assert.match(Model.recapContext("ATL", null, null, [homeNext], DURING_GAME_MS), /home vs Braves/)
+  assert.match(Model.recapContext("ATL", null, null, [roadNext], DURING_GAME_MS), /away at White Sox/)
+})
+
+test("recap request and response helpers keep malformed variants inert", () => {
+  const body = JSON.parse(Model.recapRequestBody(null, null))
+  assert.equal(body.model, "")
+  assert.match(body.messages[1].content, /facts:\n$/)
+  assert.equal(Model.parseRecap(" ".repeat(4000001)), "")
+  assert.equal(Model.parseRecap(JSON.stringify({ choices: [] })), "")
+  assert.equal(Model.parseRecap(JSON.stringify({
+    choices: [{ message: { content: [null, { type: "image" }, { text: 3 }, { text: "Safe" }] } }]
+  })), "Safe")
+})
+
+test("clubHue covers every explicit palette family and the empty fallback", () => {
+  assert.equal(Model.clubHue("Athletics"), 0.42)
+  assert.equal(Model.clubHue("Arizona Diamondbacks"), 0.42)
+  assert.equal(Model.clubHue("Colorado Rockies"), 0.42)
+  assert.equal(Model.clubHue("Pittsburgh Pirates"), 0.14)
+  assert.equal(Model.clubHue("Cleveland Guardians"), 0.14)
+  assert.equal(Model.clubHue("Texas Rangers"), 0.14)
+  assert.equal(Model.clubHue("Minnesota Twins"), 0.14)
+  assert.equal(Model.clubHue(null), 0)
+})
+
+test("the shipped club table pins every Stats API id and display name", () => {
+  const clubs = {
+    ATH: [133, "Athletics"], ATL: [144, "Atlanta Braves"], AZ: [109, "Arizona Diamondbacks"],
+    BAL: [110, "Baltimore Orioles"], BOS: [111, "Boston Red Sox"], CHC: [112, "Chicago Cubs"],
+    CIN: [113, "Cincinnati Reds"], CLE: [114, "Cleveland Guardians"], COL: [115, "Colorado Rockies"],
+    CWS: [145, "Chicago White Sox"], DET: [116, "Detroit Tigers"], HOU: [117, "Houston Astros"],
+    KC: [118, "Kansas City Royals"], LAA: [108, "Los Angeles Angels"], LAD: [119, "Los Angeles Dodgers"],
+    MIA: [146, "Miami Marlins"], MIL: [158, "Milwaukee Brewers"], MIN: [142, "Minnesota Twins"],
+    NYM: [121, "New York Mets"], NYY: [147, "New York Yankees"], PHI: [143, "Philadelphia Phillies"],
+    PIT: [134, "Pittsburgh Pirates"], SD: [135, "San Diego Padres"], SEA: [136, "Seattle Mariners"],
+    SF: [137, "San Francisco Giants"], STL: [138, "St. Louis Cardinals"], TB: [139, "Tampa Bay Rays"],
+    TEX: [140, "Texas Rangers"], TOR: [141, "Toronto Blue Jays"], WSH: [120, "Washington Nationals"]
+  }
+  assert.deepEqual(Model.teamAbbrs(), Object.keys(clubs).sort())
+  for (const [abbr, [id, name]] of Object.entries(clubs)) {
+    assert.equal(Model.teamId(abbr), id, `${abbr} id`)
+    assert.equal(Model.recapContext(abbr, null, null, [], DURING_GAME_MS), `Team: ${name}`, `${abbr} name`)
+  }
+})
+
+test("all six Stats API division ids map to their baseball names", () => {
+  const divisions = {
+    200: "AL West", 201: "AL East", 202: "AL Central",
+    203: "NL West", 204: "NL East", 205: "NL Central"
+  }
+  for (const [id, name] of Object.entries(divisions)) {
+    const raw = JSON.stringify({ records: [{ division: { id: Number(id) }, teamRecords: [
+      { divisionRank: "1", team: { id: ATL, name: "Atlanta Braves" }, wins: 1, losses: 0 }
+    ] }] })
+    assert.equal(Model.parseStandings(raw, ATL).division, name)
+  }
+})
+
+test("clean honors exact caps and leaves already-bounded text unchanged", () => {
+  assert.equal(Model.clean("abcd", 3), "abc")
+  assert.equal(Model.clean("abc", 3), "abc")
+  assert.equal(Model.clean("abc", 4), "abc")
+  assert.equal(Model.clean("x".repeat(65)).length, 64)
+})
+
+test("emptyGumbo's complete value contract is exact", () => {
+  assert.deepEqual(Model.emptyGumbo(), {
+    valid: false, state: "", awayAbbr: "", homeAbbr: "",
+    awayRuns: 0, homeRuns: 0, awayHits: 0, homeHits: 0,
+    awayErrors: 0, homeErrors: 0, inning: 0, inningOrdinal: "",
+    inningState: "", isTop: false, balls: 0, strikes: 0, outs: 0,
+    bases: { first: false, second: false, third: false },
+    batter: "", pitcher: "", lastPlay: "", innings: []
+  })
+})
+
+test("currentOrNext filters invalid states and selects by time, not array order", () => {
+  const oldFinal = mkGame({ gamePk: 1, state: "final", startMs: DURING_GAME_MS - 5 * 3600000,
+    home: { id: 145, score: 1 }, away: { id: ATL, score: 2 } })
+  const newFinal = mkGame({ gamePk: 2, state: "final", startMs: DURING_GAME_MS - 4 * 3600000,
+    home: { id: 145, score: 3 }, away: { id: ATL, score: 4 } })
+  const invalidFinal = mkGame({ gamePk: 3, state: "final", startMs: DURING_GAME_MS - 3 * 3600000,
+    home: { id: 145, score: -1 }, away: { id: ATL, score: -1 } })
+  const laterNext = mkGame({ gamePk: 4, state: "pre", startMs: DURING_GAME_MS + 4 * 3600000 })
+  const soonerNext = mkGame({ gamePk: 5, state: "pre", startMs: DURING_GAME_MS + 3 * 3600000 })
+  const stalePreview = mkGame({ gamePk: 6, state: "pre", startMs: DURING_GAME_MS - 7 * 3600000 })
+  const state = Model.currentOrNext(
+    [newFinal, invalidFinal, laterNext, oldFinal, stalePreview, soonerNext], DURING_GAME_MS)
+  assert.equal(state.status, "final")
+  assert.equal(state.game.gamePk, 2)
+
+  const noFinal = Model.currentOrNext([laterNext, stalePreview, soonerNext], DURING_GAME_MS)
+  assert.equal(noFinal.status, "next")
+  assert.equal(noFinal.game.gamePk, 5)
+})
+
+test("currentOrNext expires old finals and yields to a closer first pitch", () => {
+  const expired = mkGame({ state: "final", startMs: DURING_GAME_MS - 12 * 3600000,
+    home: { id: 145, score: 1 }, away: { id: ATL, score: 2 } })
+  assert.deepEqual(Model.currentOrNext([expired], DURING_GAME_MS), { status: "off" })
+
+  const fresh = mkGame({ state: "final", startMs: DURING_GAME_MS - 4 * 3600000,
+    home: { id: 145, score: 1 }, away: { id: ATL, score: 2 } })
+  const close = mkGame({ state: "pre", startMs: DURING_GAME_MS + 15 * 60000 })
+  const state = Model.currentOrNext([fresh, close], DURING_GAME_MS)
+  assert.equal(state.status, "next")
+  assert.equal(state.game, close)
+})
+
+test("GUMBO uses current-play counts and only completed described plays", () => {
+  const raw = JSON.stringify({
+    gameData: { status: {}, teams: {} },
+    liveData: {
+      linescore: {
+        currentInning: 1, inningState: "Top", isTopInning: true,
+        balls: 3, strikes: 2, outs: 2,
+        innings: [{ num: 1, away: {}, home: {} }]
+      },
+      plays: {
+        currentPlay: { count: { balls: 1, strikes: 0, outs: 1 }, matchup: {} },
+        allPlays: [
+          { about: { isComplete: true }, result: { description: "First complete play" } },
+          { about: { isComplete: false }, result: { description: "Incomplete play" } },
+          { about: { isComplete: true }, result: {} }
+        ]
+      }
+    }
+  })
+  const g = Model.parseGumbo(raw)
+  assert.equal(g.isTop, true)
+  assert.deepEqual([g.balls, g.strikes, g.outs], [1, 0, 1])
+  assert.deepEqual(g.innings[0], { n: 1, away: 0, home: -1 })
+  assert.equal(g.lastPlay, "First complete play")
+})
+
+test("malformed GUMBO top-level shapes return the exact inert model", () => {
+  const empty = Model.emptyGumbo()
+  assert.deepEqual(Model.parseGumbo(JSON.stringify({ liveData: {} })), empty)
+  assert.deepEqual(Model.parseGumbo(JSON.stringify({ gameData: {} })), empty)
+  assert.deepEqual(Model.parseGumbo(""), empty)
+})
+
+test("standings sort numerically and preserve exact optional row fields", () => {
+  const raw = JSON.stringify({ records: [{ division: { id: 204 }, teamRecords: [
+    { divisionRank: "2", team: { id: 1, name: "Second" }, wins: "8", losses: "7", gamesBack: "1.5",
+      streak: { streakCode: "W2" } },
+    { divisionRank: "1", team: { id: ATL, name: "First" }, wins: "9", losses: "6", gamesBack: "-",
+      streak: { streakCode: "L1" } }
+  ] }] })
+  assert.deepEqual(Model.parseStandings(raw, ATL), { division: "NL East", rows: [
+    { rank: 1, id: ATL, name: "First", wins: 9, losses: 6, gb: "-", streak: "L1" },
+    { rank: 2, id: 1, name: "Second", wins: 8, losses: 7, gb: "1.5", streak: "W2" }
+  ] })
+})
+
+test("recapContext emits one exact, bounded fact block", () => {
+  const state = { status: "final", game: mkGame({ state: "final",
+    home: { id: 145, abbr: "CWS", name: "White Sox", score: 2 },
+    away: { id: ATL, abbr: "ATL", name: "Braves", score: 5 } }) }
+  const standings = { division: "NL East", rows: [
+    { id: 999, rank: 1, wins: 80, losses: 40, gb: "-", streak: "W5" },
+    { id: ATL, rank: 2, wins: 74, losses: 53, gb: "4.5", streak: "W2" }
+  ] }
+  const past = mkGame({ state: "pre", startMs: DURING_GAME_MS - 1000 })
+  const irrelevant = mkGame({ state: "final", startMs: DURING_GAME_MS + 1000 })
+  const next = mkGame({ state: "pre", startMs: DURING_GAME_MS + 65 * 60000, isHome: false })
+  assert.equal(Model.recapContext("ATL", state, standings, [past, irrelevant, next], DURING_GAME_MS),
+    "Team: Atlanta Braves\nRecord: 74-53, 2nd in the NL East, 4.5 GB, streak W2\n" +
+    "Last game: beat White Sox 5-2\nNext game: away at White Sox in 1h 05m")
+})
+
+test("recapRequestBody pins the two-message safety prompt", () => {
+  assert.deepEqual(JSON.parse(Model.recapRequestBody("local-model", "facts")), {
+    model: "local-model", max_tokens: 700, temperature: 0.7,
+    messages: [
+      {
+        role: "system",
+        content: "You write two or three tight sentences of baseball color for a desktop widget. " +
+          "Plain language, no hype words, no emoji, no hashtags, no em dashes. " +
+          "Use only the facts provided. Do not invent scores, players, or dates."
+      },
+      { role: "user", content: "Write tonight's storyline from these facts:\nfacts" }
+    ]
+  })
+})

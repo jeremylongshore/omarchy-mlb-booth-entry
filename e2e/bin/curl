@@ -1,0 +1,137 @@
+#!/bin/sh
+# Deterministic MLB Stats API fixture command for the isolated render rig.
+# scripts/rig-render.sh prepends e2e/bin only inside its throwaway HOME, so
+# production installs continue to execute the real curl binary unchanged.
+set -eu
+
+url=""
+for argument do
+  url="$argument"
+done
+
+log_file="${XDG_RUNTIME_DIR:-/tmp}/mlb-booth-fixture.log"
+
+iso_after_days() {
+  offset_seconds=$(( $1 * 86400 ))
+  date -u -d "@$(( $(date -u +%s) + offset_seconds ))" +%Y-%m-%dT%H:%M:%SZ
+}
+
+case "$url" in
+  https://statsapi.mlb.com/api/v1/schedule\?*)
+    printf '%s\n' schedule >> "$log_file"
+    live_at="$(iso_after_days 0)"
+    game_one="$(iso_after_days 1)"
+    game_two="$(iso_after_days 2)"
+    game_three="$(iso_after_days 3)"
+    printf '%s\n' "{
+      \"dates\": [
+        {\"games\": [{
+          \"gamePk\": 824589,
+          \"gameDate\": \"$live_at\",
+          \"status\": {\"abstractGameState\": \"Live\", \"detailedState\": \"In Progress\"},
+          \"teams\": {
+            \"away\": {\"team\": {\"id\": 144, \"abbreviation\": \"ATL\", \"teamName\": \"Braves\"}, \"score\": 3},
+            \"home\": {\"team\": {\"id\": 145, \"abbreviation\": \"CWS\", \"teamName\": \"White Sox\"}, \"score\": 2}
+          }
+        }]},
+        {\"games\": [{
+          \"gamePk\": 824590,
+          \"gameDate\": \"$game_one\",
+          \"status\": {\"abstractGameState\": \"Preview\", \"detailedState\": \"Scheduled\"},
+          \"teams\": {
+            \"away\": {\"team\": {\"id\": 144, \"abbreviation\": \"ATL\", \"teamName\": \"Braves\"}},
+            \"home\": {\"team\": {\"id\": 158, \"abbreviation\": \"MIL\", \"teamName\": \"Brewers\"}}
+          }
+        }]},
+        {\"games\": [{
+          \"gamePk\": 824591,
+          \"gameDate\": \"$game_two\",
+          \"status\": {\"abstractGameState\": \"Preview\", \"detailedState\": \"Scheduled\"},
+          \"teams\": {
+            \"away\": {\"team\": {\"id\": 119, \"abbreviation\": \"LAD\", \"teamName\": \"Dodgers\"}},
+            \"home\": {\"team\": {\"id\": 144, \"abbreviation\": \"ATL\", \"teamName\": \"Braves\"}}
+          }
+        }]},
+        {\"games\": [{
+          \"gamePk\": 824592,
+          \"gameDate\": \"$game_three\",
+          \"status\": {\"abstractGameState\": \"Preview\", \"detailedState\": \"Scheduled\"},
+          \"teams\": {
+            \"away\": {\"team\": {\"id\": 143, \"abbreviation\": \"PHI\", \"teamName\": \"Phillies\"}},
+            \"home\": {\"team\": {\"id\": 144, \"abbreviation\": \"ATL\", \"teamName\": \"Braves\"}}
+          }
+        }]}
+      ]
+    }"
+    ;;
+  https://statsapi.mlb.com/api/v1/standings\?*)
+    printf '%s\n' standings >> "$log_file"
+    printf '%s\n' '{
+      "records": [{
+        "division": {"id": 204},
+        "teamRecords": [
+          {"divisionRank": "1", "team": {"id": 144, "name": "Braves"}, "wins": 76, "losses": 55, "gamesBack": "-", "streak": {"streakCode": "W3"}},
+          {"divisionRank": "2", "team": {"id": 143, "name": "Phillies"}, "wins": 72, "losses": 59, "gamesBack": "4.0", "streak": {"streakCode": "W1"}},
+          {"divisionRank": "3", "team": {"id": 121, "name": "Mets"}, "wins": 68, "losses": 63, "gamesBack": "8.0", "streak": {"streakCode": "L1"}},
+          {"divisionRank": "4", "team": {"id": 120, "name": "Nationals"}, "wins": 58, "losses": 73, "gamesBack": "18.0", "streak": {"streakCode": "W2"}},
+          {"divisionRank": "5", "team": {"id": 146, "name": "Marlins"}, "wins": 54, "losses": 77, "gamesBack": "22.0", "streak": {"streakCode": "L3"}}
+        ]
+      }]
+    }'
+    ;;
+  https://statsapi.mlb.com/api/v1.1/game/824589/feed/live)
+    printf '%s\n' gumbo >> "$log_file"
+    printf '%s\n' '{
+      "gameData": {
+        "status": {"abstractGameState": "Live"},
+        "teams": {
+          "away": {"abbreviation": "ATL", "name": "Atlanta Braves"},
+          "home": {"abbreviation": "CWS", "name": "Chicago White Sox"}
+        }
+      },
+      "liveData": {
+        "linescore": {
+          "currentInning": 7,
+          "currentInningOrdinal": "7th",
+          "inningState": "Bottom",
+          "isTopInning": false,
+          "innings": [
+            {"num": 1, "away": {"runs": 1}, "home": {"runs": 0}},
+            {"num": 2, "away": {"runs": 0}, "home": {"runs": 0}},
+            {"num": 3, "away": {"runs": 0}, "home": {"runs": 1}},
+            {"num": 4, "away": {"runs": 2}, "home": {"runs": 0}},
+            {"num": 5, "away": {"runs": 0}, "home": {"runs": 1}},
+            {"num": 6, "away": {"runs": 0}, "home": {"runs": 0}},
+            {"num": 7, "away": {"runs": 0}, "home": {"runs": 0}}
+          ],
+          "teams": {
+            "away": {"runs": 3, "hits": 8, "errors": 0},
+            "home": {"runs": 2, "hits": 6, "errors": 1}
+          },
+          "offense": {"first": {"fullName": "Luis Robert Jr."}, "third": {"fullName": "Andrew Benintendi"}},
+          "balls": 3,
+          "strikes": 2,
+          "outs": 2
+        },
+        "plays": {
+          "currentPlay": {
+            "count": {"balls": 3, "strikes": 2, "outs": 2},
+            "matchup": {
+              "batter": {"fullName": "Colson Montgomery"},
+              "pitcher": {"fullName": "Raisel Iglesias"}
+            },
+            "about": {"isComplete": false}
+          },
+          "allPlays": [{
+            "about": {"isComplete": true},
+            "result": {"description": "Luis Robert Jr. doubles on a line drive to left, scoring Miguel Vargas."}
+          }]
+        }
+      }
+    }'
+    ;;
+  *)
+    printf 'mlb-booth fixture: refused unrecognized URL: %s\n' "$url" >&2
+    exit 22
+    ;;
+esac

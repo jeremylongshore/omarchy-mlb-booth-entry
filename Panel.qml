@@ -691,8 +691,15 @@ Panel {
 
               Item {
                 required property var modelData
+                required property int index
                 width: contentColumn.width
                 height: Style.space(22)
+
+                Rectangle {
+                  anchors.fill: parent
+                  color: root.bar ? root.bar.foreground : Color.foreground
+                  opacity: index % 2 === 0 ? 0.035 : 0.0
+                }
 
                 // Opponent colour, same rule as the standings table, so the
                 // schedule and the standings agree about who is who.
@@ -761,9 +768,18 @@ Panel {
 
               Item {
                 required property var modelData
+                required property int index
                 readonly property bool isMine: modelData.id === root.myTeamId
                 width: contentColumn.width
                 height: Style.space(20)
+
+                Rectangle {
+                  anchors.fill: parent
+                  color: isMine
+                    ? Qt.hsla(Model.clubHue(modelData.name), 0.62, 0.55, 1.0)
+                    : (root.bar ? root.bar.foreground : Color.foreground)
+                  opacity: isMine ? 0.10 : (index % 2 === 0 ? 0.035 : 0.0)
+                }
 
                 // Club colour, because that is how anyone who follows the sport
                 // reads a division table. Your own club also gets a brighter,

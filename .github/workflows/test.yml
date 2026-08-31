@@ -1,36 +1,30 @@
 name: test
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
   pull_request:
-
+permissions:
+  contents: read
 jobs:
-  static:
+  unit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
-      - name: JS syntax check (every .js file)
+          cache: npm
+      - run: npm ci
+      - name: Dependency vulnerability gate
+        run: npm run audit:deps
+      - run: npm test
+      - name: Race-suite stability (three clean repetitions)
+        run: npm run test:race
+      - name: Mutation quality floor
+        run: npm run test:mutation
+      - name: Deterministic audit profile
+        run: npm run audit
+      - name: ShellCheck developer and E2E scripts
         run: |
-          for f in $(git ls-files '*.js'); do node --check "$f"; done
-      - name: manifest.json is valid and carries the required fields
-        run: |
-          jq -e '.schemaVersion == 1' manifest.json
-          jq -e '.id | test("^io\\.github\\.jeremylongshore\\.")' manifest.json
-          for field in id name version kinds entryPoints author license description; do
-            jq -e --arg f "$field" 'has($f)' manifest.json > /dev/null || { echo "missing $field"; exit 1; }
-          done
-      - name: no symlinks in the plugin tree
-        run: |
-          test -z "$(find . -type l -not -path './.git/*')"
-
-  model-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: node --test tests/*.test.js
+          shellcheck --version
+          shellcheck --severity=warning scripts/*.sh e2e/*.sh e2e/bin/* .githooks/pre-push

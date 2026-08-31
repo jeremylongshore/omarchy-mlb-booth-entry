@@ -1,30 +1,34 @@
 # Testing posture
 
-## What runs where
+## Local and CI gates
 
-| Layer | Where | What |
+| Layer | Command | Current evidence |
 | --- | --- | --- |
-| Unit | dev box + CI, `npm test` | The whole `Model.js` data layer against captured statsapi bodies plus synthetic edge shapes: schedule parse, game-state selection (including postponed, suspended, delayed start, and split doubleheaders), GUMBO parse, pill text, standings, BYOK recap request and response, and a drift gate pinning the manifest's team picker to the team table. |
-| Static | CI | JS syntax over every tracked file, manifest field assertions, no-symlinks check. |
-| Static | dev box | The contribute-system pre-submit gates (local tooling): em-dash scan over docs, private-name denylist, strikethrough scan, QML textFormat and curl-bound checks. |
-| Static | Omarchy rig | `qmllint *.qml`, `omarchy-plugin-validate .` |
-| Live render | Omarchy rig | Install, render the pill and open panel during a real game. MLB plays daily, so this needs no faked clock. |
+| Static contract | `npm test` | Exact 500/500 copy, product banner semantics, pinned CI, clean conflict-marker scan, render-proof contract |
+| Unit and fixture integration | `npm test` | 74 tests; 100% statements, lines, functions; 97.48% branches |
+| Race repetition | `npm run test:race` | Three clean repetitions of all 74 tests |
+| Mutation | `npm run test:mutation` | 90.10%; 825 killed, 3 timeout, 91 survived; blocking floor 90% |
+| Shell | `shellcheck --severity=warning scripts/*.sh e2e/*.sh .githooks/pre-push` | Pass |
+| Repository integrity | `npm run audit` | Hash verification plus deep audit and scan |
+| Omarchy policy | `scripts/run-plugin-gates.sh .` | C28-C42 pass; C43 blocks until current Buzz proof |
+| Production E2E | `npm run test:e2e` | Must run on Buzz against the exact candidate revision |
+
+GitHub Actions uses commit-pinned actions and runs install, unit/coverage,
+race, mutation, audit, and ShellCheck. CI does not call public sports or recap
+APIs.
 
 ## Fixtures
 
-`tests/fixtures/` holds real MLB Stats API bodies captured 2026-08-20 during
-ATL @ CWS (gamePk 824589, top of the 4th): the schedule window with a final,
-a live, and six future games; the GUMBO feed trimmed to the subtree the
-parser reads; the full two-league standings body. Capture commands are in
-VERIFICATION.md. The status shapes statsapi rarely serves (postponed,
-suspended, delayed start, doubleheaders) are synthesized in the test file
-from the documented status codes, since no capture window reliably contains
-them.
+`tests/fixtures/` contains bounded MLB Stats API captures from ATL at CWS on
+2026-08-20. Synthetic cases cover rare or boundary states including postponed,
+suspended, delayed-start, split-doubleheader, malformed, oversized, sparse,
+and hostile response shapes. The complete team and division reference tables
+are pinned by value, not merely counted.
 
 ## Honest boundary
 
-The unit suite proves the data layer. The QML layer (bindings, timers,
-process wiring, popup layout) is exercised only by the rig render; there is
-no QML unit harness here. The recap path is tested against canned JSON in
-CI; one manual round-trip against a hosted endpoint is recorded in
-VERIFICATION.md.
+Node tests prove the pure data model and repository contracts. They do not
+prove QML imports, shell wiring, popup geometry, or marketplace readability.
+Those require a current-revision Buzz run, a clean shell log, an exact 1280x720
+preview, and explicit human approval. Historical render evidence is not accepted
+for changed source.

@@ -8,9 +8,9 @@
 # mlb-booth's CI reported PASS on a tree the canonical gate blocked with three
 # findings, while mlb-booth was already listed.
 #
-# So this fetches the canonical gate lane from GitHub and compares content
+# So this shallow-clones the canonical source from GitHub and compares content
 # hashes. It needs network, which is why it is a separate script and a separate
-# CI step rather than part of the offline runner.
+# CI step rather than part of the offline runner. No downloaded file executes.
 #
 # Exit 0 in sync (or genuinely unreachable, see below), 1 when behind.
 set -uo pipefail
@@ -20,32 +20,39 @@ GATES="$HERE/gates"
 MANIFEST="$GATES/.lane-manifest"
 REPO="${LANE_CANONICAL_REPO:-jeremylongshore/contributing-clanker}"
 BRANCH="${LANE_CANONICAL_BRANCH:-master}"
-BASE="https://raw.githubusercontent.com/$REPO/$BRANCH/skills/contribute/scripts/gates"
+REMOTE="https://github.com/$REPO.git"
 
 [[ -f "$MANIFEST" ]] || { echo "check-lane-freshness: no .lane-manifest; run scripts/sync-gate-lane.sh" >&2; exit 1; }
-command -v curl >/dev/null 2>&1 || { echo "check-lane-freshness: curl is required" >&2; exit 1; }
+command -v git >/dev/null 2>&1 || { echo "check-lane-freshness: git is required" >&2; exit 1; }
 
 RECORDED=$(/usr/bin/grep -m1 '^# canonical:' "$MANIFEST" | /usr/bin/sed 's/.*@//')
 echo "vendored lane recorded from: ${RECORDED:-unknown}"
 echo "comparing against $REPO@$BRANCH"
 
 behind=0
-unreachable=0
 checked=0
+FETCH_ROOT="$(mktemp -d -t omarchy-gate-freshness.XXXXXXXX)"
+trap 'rm -rf -- "$FETCH_ROOT"' EXIT
+CANON_REPO="$FETCH_ROOT/canonical"
+
+if ! /usr/bin/git clone --quiet --depth 1 --branch "$BRANCH" "$REMOTE" "$CANON_REPO"; then
+  echo "check-lane-freshness: canonical clone was unreachable - treating as inconclusive, not stale" >&2
+  exit 0
+fi
+CANON_GATES="$CANON_REPO/skills/contribute/scripts/gates"
+CURRENT=$(/usr/bin/git -C "$CANON_REPO" rev-parse HEAD 2>/dev/null || echo unknown)
+echo "canonical source currently at: $CURRENT"
 
 while read -r want file; do
   [[ "$want" == \#* || -z "$want" ]] && continue
-  # A 404 on a gate that exists locally means canonical DELETED it. That is
-  # drift too, not an outage, so it is only forgiven when every fetch fails.
-  body=$(/usr/bin/curl -fsSL --max-time 20 "$BASE/$file" 2>/dev/null)
-  rc=$?
-  if [[ "$rc" -ne 0 ]]; then
-    echo "  ?  $file — could not fetch (rc=$rc)"
-    unreachable=$((unreachable + 1))
+  canonical="$CANON_GATES/$file"
+  if [[ ! -f "$canonical" ]]; then
+    echo "  ✗  $file — absent from canonical"
+    behind=1
     continue
   fi
   checked=$((checked + 1))
-  got=$(/usr/bin/printf '%s' "$body" | /usr/bin/sha256sum | /usr/bin/cut -d' ' -f1)
+  got=$(/usr/bin/sha256sum "$canonical" | /usr/bin/cut -d' ' -f1)
   local_hash=$(cd "$GATES" && /usr/bin/sha256sum "$file" | /usr/bin/cut -d' ' -f1)
   if [[ "$got" != "$local_hash" ]]; then
     # Deliberately "differs", not "is behind": a hash comparison cannot tell
@@ -57,14 +64,6 @@ while read -r want file; do
   fi
 done < "$MANIFEST"
 
-# Distinguish "the network is down" from "we are behind". Failing a PR because
-# GitHub blipped would train people to ignore this check, which is how the
-# original drift survived.
-if [[ "$checked" -eq 0 ]]; then
-  echo "check-lane-freshness: could not reach canonical at all ($unreachable fetch failures) — treating as inconclusive, not stale" >&2
-  exit 0
-fi
-
 if [[ "$behind" -ne 0 ]]; then
   echo
   echo "check-lane-freshness: VENDORED LANE DOES NOT MATCH CANONICAL." >&2
@@ -73,5 +72,5 @@ if [[ "$behind" -ne 0 ]]; then
   exit 1
 fi
 
-echo "check-lane-freshness: in sync with canonical ($checked files compared, $unreachable unreachable)"
+echo "check-lane-freshness: in sync with canonical ($checked files compared)"
 exit 0

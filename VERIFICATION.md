@@ -4,7 +4,7 @@ What has actually been proven, how, and what remains.
 
 ## Unit suite (dev box + CI)
 
-**47 tests, all passing** (`npm test`). The whole `Model.js` data layer:
+**74 tests, all passing** (`npm test`). The whole `Model.js` data layer:
 schedule parse, game-state selection, GUMBO parse, pill text, standings,
 and the BYOK recap request and response shapes. Assertions against the live
 capture check ground truth (ATL @ CWS, gamePk 824589, top of the 4th, 2-2
@@ -12,7 +12,13 @@ count, 0 out, Matt Olson batting); the status shapes statsapi rarely serves
 are synthesized from the documented status codes: postponed and cancelled
 (abstract Final with no score), suspended (abstract Live), delayed starts
 (abstract Preview past first pitch), and split doubleheaders. A drift test
-pins the manifest's team picker to the team table.
+pins the manifest's team picker to the team table. The same suite enforces
+exact 500-character marketplace copy, a product-specific banner, hash-bound
+render tooling, pinned CI actions, and the absence of merge-conflict markers.
+Coverage is 100% statements, lines, and functions with 97.48% branches.
+Mutation testing kills 825 of 919 generated mutants with 3 timeouts, for a
+90.10% score against a blocking 90% floor. The suite also passes three clean
+race repetitions.
 
 Fixture capture commands (2026-08-20, during the live game):
 
@@ -24,13 +30,13 @@ curl -s "https://statsapi.mlb.com/api/v1.1/game/824589/feed/live" | jq '{gameDat
 
 ## Static checks (dev box)
 
-Pre-submit content sweep via the author's local contribute-system gate
-runner (tooling lives outside this repo): em and en dash scan over the docs
-and manifest, a private-name denylist over contents and filenames, a
-strikethrough scan, a check that every QML `Text` binding data declares
-`textFormat`, and a check that every curl argv carries `--max-filesize`.
-All pass. CI runs the portable slice: JS syntax over every tracked file,
-manifest field assertions, and a no-symlinks check.
+The vendored C28-C42 Omarchy lane passes, including prose, privacy,
+QML-injection, runtime-dependency, overflow, SSRF, panel-design, state-file,
+and resource-budget checks. ShellCheck passes over developer, E2E, and
+pre-push scripts. The deterministic audit harness pins the enforcement files.
+CI uses commit-pinned actions and runs install, unit/coverage, three-pass race,
+mutation, audit, and ShellCheck gates. C43 remains blocked until a new render
+proof is captured and approved on Buzz for this exact revision.
 
 ## Four-reviewer panel (2026-08-20, pre-submission)
 
@@ -64,7 +70,7 @@ built plugin before submission. What they caught and this repo then fixed:
   values configure via the widget's `shell.json` entry, which is what the
   settings accessor reads).
 
-## Proven on the Omarchy rig (2026-08-20, during ATL @ CWS)
+## Historical Omarchy rig evidence (2026-08-20, during ATL @ CWS)
 
 - [x] `omarchy-plugin-validate .` exit 0
 - [x] `qmllint BarWidget.qml Panel.qml` 0 errors, exit 0 (warnings are the
@@ -91,9 +97,12 @@ built plugin before submission. What they caught and this repo then fixed:
       content (now 700), and typed content-part arrays parsed to nothing
       (now joined).
 
-## Honest boundary
+## Current-revision boundary
 
-The QML layer is proven by the rig render, not by unit tests. The pill's
-countdown and final states are unit-tested but not yet rig-rendered (that
-needs a game-day boundary). The recap's network leg is one manual
-round-trip, not CI. Nothing in CI touches the network.
+The 2026-08-20 render proves the earlier revision, not the current source SHA.
+The current QML layer, new row treatments, exact 1280x720 preview, clean shell
+log, and human marketplace-scale inspection still require Buzz production.
+Until `.rig-proof.json` and `.render-proof.json` bind those results to the
+current tree, C43 correctly blocks shipment. The recap network leg remains a
+historical manual round-trip and never runs in CI. Nothing in CI touches the
+network.
