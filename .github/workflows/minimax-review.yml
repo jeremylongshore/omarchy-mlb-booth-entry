@@ -97,7 +97,7 @@ jobs:
           github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: MiniMax security review
-        uses: jeremylongshore/minimax-code-review@d1314b96c1b261d5bf026d0a669823a7e5ce6b46
+        uses: jeremylongshore/minimax-code-review@bcaa65182e52183f14746663aa2049641c0dbca5
         with:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
           MINIMAX_MODEL: ${{ vars.MINIMAX_MODEL || 'MiniMax-M3' }}
@@ -171,7 +171,7 @@ jobs:
           github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: MiniMax runtime review
-        uses: jeremylongshore/minimax-code-review@d1314b96c1b261d5bf026d0a669823a7e5ce6b46
+        uses: jeremylongshore/minimax-code-review@bcaa65182e52183f14746663aa2049641c0dbca5
         with:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
           MINIMAX_MODEL: ${{ vars.MINIMAX_MODEL || 'MiniMax-M3' }}
@@ -240,7 +240,7 @@ jobs:
           github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: MiniMax design review
-        uses: jeremylongshore/minimax-code-review@d1314b96c1b261d5bf026d0a669823a7e5ce6b46
+        uses: jeremylongshore/minimax-code-review@bcaa65182e52183f14746663aa2049641c0dbca5
         with:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
           MINIMAX_MODEL: ${{ vars.MINIMAX_MODEL || 'MiniMax-M3' }}
@@ -296,7 +296,7 @@ jobs:
           github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: MiniMax claims audit
-        uses: jeremylongshore/minimax-code-review@d1314b96c1b261d5bf026d0a669823a7e5ce6b46
+        uses: jeremylongshore/minimax-code-review@bcaa65182e52183f14746663aa2049641c0dbca5
         with:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
           MINIMAX_MODEL: ${{ vars.MINIMAX_MODEL || 'MiniMax-M3' }}
