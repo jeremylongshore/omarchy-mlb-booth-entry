@@ -72,6 +72,24 @@ test("parseSchedule maps states and hydrated scores", () => {
   assert.equal(games.filter((g) => g.state === "pre").length, 6)
 })
 
+test("isSchedulePayload accepts a dates document and rejects empty or malformed bodies", () => {
+  assert.equal(Model.isSchedulePayload(scheduleRaw), true)
+  assert.equal(Model.isSchedulePayload('{"dates":[]}'), true)
+  assert.equal(Model.isSchedulePayload(""), false)
+  assert.equal(Model.isSchedulePayload("{}"), false)
+  assert.equal(Model.isSchedulePayload("not json"), false)
+})
+
+test("scheduleBelongsToTeam rejects another club's stale payload", () => {
+  const pit = Model.teamId("PIT")
+  const atl = Model.teamId("ATL")
+  const games = Model.parseSchedule(scheduleRaw, atl)
+  assert.equal(Model.scheduleBelongsToTeam(games, atl), true)
+  assert.equal(Model.scheduleBelongsToTeam(games, pit), false)
+  assert.equal(Model.scheduleBelongsToTeam([], pit), true)
+  assert.equal(Model.scheduleBelongsToTeam(null, pit), false)
+})
+
 test("parseSchedule returns [] on malformed input, keeping last-good state", () => {
   assert.deepEqual(Model.parseSchedule("not json", ATL), [])
   assert.deepEqual(Model.parseSchedule("", ATL), [])
@@ -429,6 +447,43 @@ test("the manifest team picker cannot drift from the team table", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "manifest.json"), "utf8"))
   const field = manifest.barWidget.schema.find((f) => f.key === "team")
   assert.deepEqual(field.options, Model.teamAbbrs())
+})
+
+test("normalizedTeam accepts known clubs and falls back to ATL", () => {
+  assert.equal(Model.normalizedTeam("pit"), "PIT")
+  assert.equal(Model.normalizedTeam("PIT"), "PIT")
+  assert.equal(Model.normalizedTeam("XYZ"), "ATL")
+  assert.equal(Model.normalizedTeam(""), "ATL")
+  assert.equal(Model.normalizedTeam(null), "ATL")
+})
+
+test("teamName returns the club name and blanks unknowns", () => {
+  assert.equal(Model.teamName("PIT"), "Pittsburgh Pirates")
+  assert.equal(Model.teamName("atl"), "Atlanta Braves")
+  assert.equal(Model.teamName("nope"), "")
+})
+
+test("normalizedTimeFormat is 12h or 24h", () => {
+  assert.equal(Model.normalizedTimeFormat("12h"), "12h")
+  assert.equal(Model.normalizedTimeFormat("12H"), "12h")
+  assert.equal(Model.normalizedTimeFormat("24h"), "24h")
+  assert.equal(Model.normalizedTimeFormat(""), "24h")
+  assert.equal(Model.normalizedTimeFormat("nope"), "24h")
+})
+
+test("wallClockFormat switches Qt format strings", () => {
+  assert.equal(Model.wallClockFormat("24h", "schedule"), "ddd HH:mm")
+  assert.equal(Model.wallClockFormat("12h", "schedule"), "ddd h:mm AP")
+  assert.equal(Model.wallClockFormat("12h", "tooltip"), "ddd d MMM · h:mm AP")
+  assert.equal(Model.wallClockFormat("24h", "tooltip"), "ddd d MMM · HH:mm")
+  assert.equal(Model.wallClockFormat("", "schedule"), "ddd HH:mm")
+})
+
+test("the manifest timeFormat picker is 12h or 24h defaulting to 24h", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "manifest.json"), "utf8"))
+  const field = manifest.barWidget.schema.find((f) => f.key === "timeFormat")
+  assert.deepEqual(field.options, ["12h", "24h"])
+  assert.equal(field.defaultValue, "24h")
 })
 
 // --------------------------------------------------------------- club colour

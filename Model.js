@@ -68,6 +68,31 @@ function teamId(abbr) {
   return t ? t.id : 0
 }
 
+function teamName(abbr) {
+  var t = TEAMS[String(abbr || "").toUpperCase()]
+  return t ? t.name : ""
+}
+
+// Unknown or blank clubs fall back to the shipped default, never to an
+// empty picker state that would fetch teamId 0.
+function normalizedTeam(abbr) {
+  var key = String(abbr || "").toUpperCase()
+  return TEAMS[key] ? key : "ATL"
+}
+
+function normalizedTimeFormat(value) {
+  return String(value || "").toLowerCase() === "12h" ? "12h" : "24h"
+}
+
+// Qt formatDateTime strings for first-pitch wall clocks. The pill countdown
+// stays a duration; only schedule rows and the tooltip show a clock.
+function wallClockFormat(timeFormat, kind) {
+  var twelve = normalizedTimeFormat(timeFormat) === "12h"
+  if (kind === "tooltip")
+    return twelve ? "ddd d MMM · h:mm AP" : "ddd d MMM · HH:mm"
+  return twelve ? "ddd h:mm AP" : "ddd HH:mm"
+}
+
 // Sanitize every string that comes from the network before it reaches a QML
 // Text. Strips: angle brackets (a first-party bar label renders as Qt
 // AutoText, which promotes an HTML-looking string to StyledText — an
@@ -135,6 +160,30 @@ function parseSchedule(raw, myTeamId) {
   }
   out.sort(function(a, b) { return a.startMs - b.startMs })
   return out
+}
+
+// A schedule payload is for one club (the statsapi teamId query). Reject a
+// stale curl completion from a previous club so the pill cannot flash ATL
+// after the user picked PIT.
+function isSchedulePayload(raw) {
+  var s = String(raw || "")
+  if (!s.length || s.length > MAX_BODY_CHARS) return false
+  var data
+  try { data = JSON.parse(s) } catch (e) { return false }
+  return !!(data && data.dates)
+}
+
+function scheduleBelongsToTeam(games, teamId) {
+  if (!Array.isArray(games)) return false
+  if (games.length === 0) return true
+  if (!teamId) return false
+  for (var i = 0; i < games.length; i++) {
+    var g = games[i]
+    if (!g) continue
+    if (g.home && g.home.id === teamId) return true
+    if (g.away && g.away.id === teamId) return true
+  }
+  return false
 }
 
 function sideInfo(side) {
@@ -566,8 +615,14 @@ if (typeof module !== "undefined") {
     clubHue: clubHue,
     teamAbbrs: teamAbbrs,
     teamId: teamId,
+    teamName: teamName,
+    normalizedTeam: normalizedTeam,
+    normalizedTimeFormat: normalizedTimeFormat,
+    wallClockFormat: wallClockFormat,
     clean: clean,
     parseSchedule: parseSchedule,
+    isSchedulePayload: isSchedulePayload,
+    scheduleBelongsToTeam: scheduleBelongsToTeam,
     currentOrNext: currentOrNext,
     countdown: countdown,
     emptyGumbo: emptyGumbo,
