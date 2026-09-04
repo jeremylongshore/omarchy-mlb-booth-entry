@@ -72,6 +72,14 @@ test("parseSchedule maps states and hydrated scores", () => {
   assert.equal(games.filter((g) => g.state === "pre").length, 6)
 })
 
+test("isSchedulePayload accepts a dates document and rejects empty or malformed bodies", () => {
+  assert.equal(Model.isSchedulePayload(scheduleRaw), true)
+  assert.equal(Model.isSchedulePayload('{"dates":[]}'), true)
+  assert.equal(Model.isSchedulePayload(""), false)
+  assert.equal(Model.isSchedulePayload("{}"), false)
+  assert.equal(Model.isSchedulePayload("not json"), false)
+})
+
 test("scheduleBelongsToTeam rejects another club's stale payload", () => {
   const pit = Model.teamId("PIT")
   const atl = Model.teamId("ATL")

@@ -22,6 +22,7 @@ Nothing yet.
 ### Fixed
 
 - Pill no longer flashes the default club (ATL) before host settings inject, or when a stale schedule fetch for the previous club finishes last
+- Failed schedule fetches no longer collapse the bar slot; the club abbr stays visible so settings remain reachable
 
 ## [1.0.0] - 2026-08-22
 

@@ -134,16 +134,17 @@ Panel {
   // BarWidget lights the pill from this (template contract name).
   readonly property bool isAlert: isLive
 
-  // Bar pill. Never silently vanishes: while loading it shows an ellipsis so
-  // an unreachable API reads as "loading", not "widget gone".
-  //   loading            : "…"
-  //   pregame            : "ATL @ CWS 1h 05m"  (or "… now" in a rain delay)
-  //   live               : "ATL 1-0 · T4 · 2-2, 0 out"
-  //   postgame           : "ATL W 4-2"
-  //   nothing in 8 days  : ""  (legitimately quiet; slot collapses)
+  // Bar pill. Never silently vanishes: while loading it shows the club
+  // plus an ellipsis; with no game in the window it still shows the club
+  // so the settings gear stays reachable.
+  //   loading            : "PIT · …"
+  //   pregame            : "PIT vs LAA 1h 05m"
+  //   live               : "PIT 1-0 · T4 · 2-2, 0 out"
+  //   postgame           : "PIT W 4-2"
+  //   nothing in 8 days  : "PIT"
   readonly property string label: {
-    if (!scheduleLoaded) return "…"
-    if (gameState.status === "off") return ""
+    if (!scheduleLoaded) return teamAbbr ? teamAbbr + " · …" : "…"
+    if (gameState.status === "off") return teamAbbr
     return Model.pillText(gameState, myTeamId, gumbo)
   }
 
@@ -179,11 +180,15 @@ Panel {
     root.scheduleFetchTeamId = root.myTeamId
     scheduleProc.command = curl("https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId="
       + root.scheduleFetchTeamId + "&hydrate=team,linescore&startDate=" + d0 + "&endDate=" + d1)
-    if (scheduleProc.running) scheduleProc.running = false
-    Qt.callLater(function() {
-      if (!root.hostReady || root.scheduleFetchTeamId !== root.myTeamId) return
-      if (!scheduleProc.running) scheduleProc.running = true
-    })
+    if (scheduleProc.running) {
+      scheduleProc.running = false
+      Qt.callLater(function() {
+        if (!root.hostReady || root.scheduleFetchTeamId !== root.myTeamId) return
+        if (!scheduleProc.running) scheduleProc.running = true
+      })
+    } else {
+      scheduleProc.running = true
+    }
     var season = new Date(nowMs).toISOString().slice(0, 4)
     standingsProc.command = curl("https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=" + season)
     if (!standingsProc.running) standingsProc.running = true
@@ -266,6 +271,7 @@ Panel {
       onStreamFinished: {
         var requested = root.scheduleFetchTeamId
         if (!requested || requested !== root.myTeamId) return
+        if (!Model.isSchedulePayload(text)) return
         var parsed = Model.parseSchedule(text, requested)
         if (!Model.scheduleBelongsToTeam(parsed, requested)) return
         root.games = parsed

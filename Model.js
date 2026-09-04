@@ -165,6 +165,14 @@ function parseSchedule(raw, myTeamId) {
 // A schedule payload is for one club (the statsapi teamId query). Reject a
 // stale curl completion from a previous club so the pill cannot flash ATL
 // after the user picked PIT.
+function isSchedulePayload(raw) {
+  var s = String(raw || "")
+  if (!s.length || s.length > MAX_BODY_CHARS) return false
+  var data
+  try { data = JSON.parse(s) } catch (e) { return false }
+  return !!(data && data.dates)
+}
+
 function scheduleBelongsToTeam(games, teamId) {
   if (!Array.isArray(games)) return false
   if (games.length === 0) return true
@@ -613,6 +621,7 @@ if (typeof module !== "undefined") {
     wallClockFormat: wallClockFormat,
     clean: clean,
     parseSchedule: parseSchedule,
+    isSchedulePayload: isSchedulePayload,
     scheduleBelongsToTeam: scheduleBelongsToTeam,
     currentOrNext: currentOrNext,
     countdown: countdown,
