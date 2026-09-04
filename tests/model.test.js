@@ -72,6 +72,16 @@ test("parseSchedule maps states and hydrated scores", () => {
   assert.equal(games.filter((g) => g.state === "pre").length, 6)
 })
 
+test("scheduleBelongsToTeam rejects another club's stale payload", () => {
+  const pit = Model.teamId("PIT")
+  const atl = Model.teamId("ATL")
+  const games = Model.parseSchedule(scheduleRaw, atl)
+  assert.equal(Model.scheduleBelongsToTeam(games, atl), true)
+  assert.equal(Model.scheduleBelongsToTeam(games, pit), false)
+  assert.equal(Model.scheduleBelongsToTeam([], pit), true)
+  assert.equal(Model.scheduleBelongsToTeam(null, pit), false)
+})
+
 test("parseSchedule returns [] on malformed input, keeping last-good state", () => {
   assert.deepEqual(Model.parseSchedule("not json", ATL), [])
   assert.deepEqual(Model.parseSchedule("", ATL), [])

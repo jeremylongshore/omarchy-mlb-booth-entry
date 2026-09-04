@@ -27,9 +27,16 @@ Panel {
 
   // ---- Settings. Team and clock format are the real choices; the AI trio
   //      is optional and off until all three are filled.
-  readonly property string teamAbbr: Model.normalizedTeam(setting("team", "ATL"))
+  //
+  // Bar and settings are injected after this Panel is constructed. Until
+  // `bar` is set, `settings` is still the empty default object, and
+  // setting("team", "ATL") would fetch Atlanta and paint ATL on the pill.
+  // Stay idle until the host injects; then the layout team (or ATL) applies.
+  readonly property bool hostReady: bar !== null
+  readonly property string teamAbbr: hostReady ? Model.normalizedTeam(setting("team", "ATL")) : ""
   readonly property int myTeamId: Model.teamId(teamAbbr)
-  readonly property string timeFormat: Model.normalizedTimeFormat(setting("timeFormat", "24h"))
+  readonly property string timeFormat: hostReady ? Model.normalizedTimeFormat(setting("timeFormat", "24h")) : "24h"
+  property int scheduleFetchTeamId: 0
   property bool editingSettings: false
   readonly property string aiBaseUrl: String(setting("aiBaseUrl", ""))
   readonly property string aiModel: String(setting("aiModel", ""))
@@ -153,6 +160,7 @@ Panel {
   }
 
   onMyTeamIdChanged: {
+    if (!root.myTeamId) return
     games = []
     scheduleLoaded = false
     standings = ({ division: "", rows: [] })
@@ -165,11 +173,17 @@ Panel {
   }
 
   function refresh() {
+    if (!root.hostReady || !root.myTeamId) return
     var d0 = new Date(nowMs - 86400000).toISOString().slice(0, 10)
     var d1 = new Date(nowMs + 7 * 86400000).toISOString().slice(0, 10)
+    root.scheduleFetchTeamId = root.myTeamId
     scheduleProc.command = curl("https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId="
-      + myTeamId + "&hydrate=team,linescore&startDate=" + d0 + "&endDate=" + d1)
-    if (!scheduleProc.running) scheduleProc.running = true
+      + root.scheduleFetchTeamId + "&hydrate=team,linescore&startDate=" + d0 + "&endDate=" + d1)
+    if (scheduleProc.running) scheduleProc.running = false
+    Qt.callLater(function() {
+      if (!root.hostReady || root.scheduleFetchTeamId !== root.myTeamId) return
+      if (!scheduleProc.running) scheduleProc.running = true
+    })
     var season = new Date(nowMs).toISOString().slice(0, 4)
     standingsProc.command = curl("https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=" + season)
     if (!standingsProc.running) standingsProc.running = true
@@ -250,12 +264,13 @@ Panel {
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
-        var parsed = Model.parseSchedule(text, root.myTeamId)
-        if (parsed.length) {
-          root.games = parsed
-          root.scheduleLoaded = true
-          root.maybeRecap()
-        }
+        var requested = root.scheduleFetchTeamId
+        if (!requested || requested !== root.myTeamId) return
+        var parsed = Model.parseSchedule(text, requested)
+        if (!Model.scheduleBelongsToTeam(parsed, requested)) return
+        root.games = parsed
+        root.scheduleLoaded = true
+        if (parsed.length) root.maybeRecap()
       }
     }
   }

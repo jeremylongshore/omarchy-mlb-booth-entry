@@ -19,6 +19,10 @@ Nothing yet.
 - Settings page in the popup (gear, or right-click the pill): favorite club and 12-hour or 24-hour first-pitch times
 - `timeFormat` widget setting (`12h` or `24h`, default `24h`) written to the existing bar entry
 
+### Fixed
+
+- Pill no longer flashes the default club (ATL) before host settings inject, or when a stale schedule fetch for the previous club finishes last
+
 ## [1.0.0] - 2026-08-22
 
 ### Security
