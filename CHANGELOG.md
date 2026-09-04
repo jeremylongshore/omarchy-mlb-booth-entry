@@ -12,6 +12,13 @@ Regenerate with `scripts/gen-changelog.sh`.
 
 Nothing yet.
 
+## [1.1.0] - 2026-09-04
+
+### Added
+
+- Settings page in the popup (gear, or right-click the pill): favorite club and 12-hour or 24-hour first-pitch times
+- `timeFormat` widget setting (`12h` or `24h`, default `24h`) written to the existing bar entry
+
 ## [1.0.0] - 2026-08-22
 
 ### Security

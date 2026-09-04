@@ -25,6 +25,11 @@ BarWidget {
     if (panelLoader.item && panelLoader.item.toggle) panelLoader.item.toggle()
   }
 
+  function openSettings() {
+    if (panelLoader.item && panelLoader.item.openSettings)
+      panelLoader.item.openSettings()
+  }
+
   // Shape contract for shell.summon/hide/toggle routing (Bar.findPanelWidget
   // requires open/close/opened on the bar-widget root).
   readonly property bool opened: panelLoader.item ? panelLoader.item.opened === true : false
@@ -75,6 +80,7 @@ BarWidget {
 
     onPressed: function(b) {
       if (b === Qt.MiddleButton) root.refresh()
+      else if (b === Qt.RightButton) root.openSettings()
       else root.togglePanel()
     }
   }

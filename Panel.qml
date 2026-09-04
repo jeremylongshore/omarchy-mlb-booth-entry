@@ -9,9 +9,9 @@ import "Model.js" as Model
 // polling loop, the optional BYOK recap, and the popup UI. Hosted invisibly
 // by BarWidget.qml, which renders `label` in the bar slot.
 //
-// Data is the MLB Stats API (statsapi.mlb.com), free and keyless. The only
-// setting a user must own is the team; the three AI fields are optional and
-// the widget is complete without them.
+// Data is the MLB Stats API (statsapi.mlb.com), free and keyless. Team and
+// 12h/24h wall clocks are the settings a user owns; the three AI fields are
+// optional and the widget is complete without them.
 Panel {
   id: root
   moduleName: "io.github.jeremylongshore.mlb-booth"
@@ -25,10 +25,12 @@ Panel {
   property var hostWidget: null
   readonly property var barIdentity: hostWidget || root
 
-  // ---- Settings. Team is the one real choice; the AI trio is optional and
-  //      off until all three are filled.
-  readonly property string teamAbbr: String(setting("team", "ATL")).toUpperCase()
+  // ---- Settings. Team and clock format are the real choices; the AI trio
+  //      is optional and off until all three are filled.
+  readonly property string teamAbbr: Model.normalizedTeam(setting("team", "ATL"))
   readonly property int myTeamId: Model.teamId(teamAbbr)
+  readonly property string timeFormat: Model.normalizedTimeFormat(setting("timeFormat", "24h"))
+  property bool editingSettings: false
   readonly property string aiBaseUrl: String(setting("aiBaseUrl", ""))
   readonly property string aiModel: String(setting("aiModel", ""))
   readonly property string aiApiKey: String(setting("aiApiKey", ""))
@@ -54,7 +56,31 @@ Panel {
   }
 
   function close() {
+    root.editingSettings = false
     root.controller.hide()
+  }
+
+  function openSettings() {
+    root.editingSettings = true
+    root.controller.show()
+  }
+
+  function persistSettings(team, timeFormat) {
+    var entry = { id: root.moduleName }
+    var src = root.settings
+    if (src) {
+      for (var key in src) {
+        if (key !== "id") entry[key] = src[key]
+      }
+    }
+    entry.team = Model.normalizedTeam(team)
+    entry.timeFormat = Model.normalizedTimeFormat(timeFormat)
+    root.settings = entry
+    if (root.hostWidget && "settings" in root.hostWidget)
+      root.hostWidget.settings = entry
+    if (root.bar && root.bar.shell && typeof root.bar.shell.updateEntryInline === "function")
+      root.bar.shell.updateEntryInline(root.moduleName, entry)
+    root.editingSettings = false
   }
 
   function toggle() {
@@ -122,7 +148,8 @@ Panel {
     if (isLive) return s.mine.name + vs + s.theirs.name + " · LIVE"
     if (gameState.status === "final") return s.mine.name + vs + s.theirs.name + " · Final"
     return s.mine.name + vs + s.theirs.name + " · "
-      + Qt.formatDateTime(new Date(gameState.game.startMs), "ddd d MMM · HH:mm")
+      + Qt.formatDateTime(new Date(gameState.game.startMs),
+        Model.wallClockFormat(root.timeFormat, "tooltip"))
   }
 
   onMyTeamIdChanged: {
@@ -330,6 +357,7 @@ Panel {
         root.hostWidget.broadcast("refresh")
       else root.refresh()
     }
+    function settings(): void { root.openSettings() }
   }
 
   // ---- Popup UI.
@@ -363,8 +391,70 @@ Panel {
           width: parent.width
           spacing: Style.space(12)
 
+          Item {
+            width: parent.width
+            height: Style.space(26)
+
+            Text {
+              visible: !root.editingSettings
+              anchors.left: parent.left
+              anchors.leftMargin: Style.space(16)
+              anchors.right: gearBtn.left
+              anchors.rightMargin: Style.space(8)
+              anchors.verticalCenter: parent.verticalCenter
+              text: root.editingSettings ? "" : "MLB BOOTH"
+              textFormat: Text.PlainText
+              elide: Text.ElideRight
+              color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Color.muted
+              font.family: root.bar ? root.bar.fontFamily : Style.font.family
+              font.pixelSize: Style.font.caption
+              font.letterSpacing: 1
+            }
+
+            Rectangle {
+              id: gearBtn
+              anchors.right: parent.right
+              anchors.rightMargin: Style.space(10)
+              anchors.verticalCenter: parent.verticalCenter
+              width: Style.space(26)
+              height: Style.space(26)
+              radius: Style.cornerRadius
+              color: gearArea.containsMouse
+                ? (root.bar ? Style.hoverFillFor(root.bar.foreground, Color.accent) : "#333")
+                : "transparent"
+
+              Text {
+                anchors.centerIn: parent
+                text: root.editingSettings ? String.fromCharCode(0x00d7) : String.fromCharCode(0xf013)
+                textFormat: Text.PlainText
+                color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Color.muted
+                font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                font.pixelSize: root.editingSettings ? Style.font.title : Style.font.body
+              }
+
+              MouseArea {
+                id: gearArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.editingSettings = !root.editingSettings
+              }
+            }
+          }
+
+          SettingsForm {
+            visible: root.editingSettings
+            width: parent.width
+            bar: root.bar
+            team: root.teamAbbr
+            timeFormat: root.timeFormat
+            onSaved: function(team, timeFormat) { root.persistSettings(team, timeFormat) }
+            onCancelled: root.editingSettings = false
+          }
+
           // ---- Hero: matchup, live badge or countdown or final.
           Item {
+            visible: !root.editingSettings
             width: parent.width
             height: heroCol.implicitHeight
 
@@ -466,7 +556,7 @@ Panel {
 
           // ---- Live: line score, count and bases, last play.
           Column {
-            visible: root.isLive && root.gumbo.valid
+            visible: !root.editingSettings && root.isLive && root.gumbo.valid
             width: parent.width
             spacing: Style.space(2)
 
@@ -636,7 +726,7 @@ Panel {
 
           // ---- The Booth: optional AI storyline between games.
           Column {
-            visible: !root.isLive && root.recapText !== ""
+            visible: !root.editingSettings && !root.isLive && root.recapText !== ""
             width: parent.width
             spacing: Style.space(2)
 
@@ -665,7 +755,7 @@ Panel {
 
           // ---- Upcoming games.
           Column {
-            visible: root.scheduleLoaded
+            visible: !root.editingSettings && root.scheduleLoaded
             width: parent.width
             spacing: Style.space(2)
 
@@ -734,11 +824,12 @@ Panel {
                   anchors.right: parent.right
                   anchors.rightMargin: Style.space(16)
                   anchors.verticalCenter: parent.verticalCenter
-                  width: Style.space(90)
+                  width: Style.space(112)
                   horizontalAlignment: Text.AlignRight
                   maximumLineCount: 1
                   elide: Text.ElideRight
-                  text: Qt.formatDateTime(new Date(modelData.startMs), "ddd HH:mm")
+                  text: Qt.formatDateTime(new Date(modelData.startMs),
+                    Model.wallClockFormat(root.timeFormat, "schedule"))
                   textFormat: Text.PlainText
                   color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Color.muted
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
@@ -750,7 +841,7 @@ Panel {
 
           // ---- Division standings.
           Column {
-            visible: root.standings.rows.length > 0
+            visible: !root.editingSettings && root.standings.rows.length > 0
             width: parent.width
             spacing: Style.space(2)
 
