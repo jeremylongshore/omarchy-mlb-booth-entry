@@ -10,21 +10,51 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Classify change scope
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        run: |
+          base="$PUSH_BASE"
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            base="$PR_BASE"
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            base=""
+          fi
+          scope="$(scripts/ci-change-scope.sh "$base" "$GITHUB_SHA")"
+          echo "scope=$scope"
+          if [[ "$scope" == "full" ]]; then
+            echo "run_full=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_full=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.scope.outputs.run_full == 'true'
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - if: steps.scope.outputs.run_full == 'true'
+        run: npm ci
       - name: Dependency vulnerability gate
+        if: steps.scope.outputs.run_full == 'true'
         run: npm run audit:deps
-      - run: npm test
+      - if: steps.scope.outputs.run_full == 'true'
+        run: npm test
       - name: Race-suite stability (three clean repetitions)
+        if: steps.scope.outputs.run_full == 'true'
         run: npm run test:race
       - name: Mutation quality floor
+        if: steps.scope.outputs.run_full == 'true'
         run: npm run test:mutation
       - name: Deterministic audit profile
+        if: steps.scope.outputs.run_full == 'true'
         run: npm run audit
       - name: ShellCheck developer and E2E scripts
+        if: steps.scope.outputs.run_full == 'true'
         run: |
           shellcheck --version
           shellcheck --severity=warning scripts/*.sh e2e/*.sh e2e/bin/* .githooks/pre-push

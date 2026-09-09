@@ -6,21 +6,26 @@
 
 <!-- The problem this solves. If you chose between approaches, say which and why. -->
 
+## Change type
+
+- [ ] Documentation only
+- [ ] Code, tests, manifest, automation, or runtime behavior
+- [ ] Visible QML, layout, controls, or graphics
+
 ## Verification
 
-<!-- Delete any row you did not run. An unrun check is worse than an absent one. -->
+<!-- Report only checks you ran. Never imply that an unavailable check passed. -->
 
-| Check | Result |
-| --- | --- |
-| `npm test` | |
-| `scripts/run-plugin-gates.sh .` | |
-| `scripts/rig-verify.sh` | |
-| `scripts/rig-render.sh` (loaded in a real shell) | |
+| Check | Required when | Result |
+| --- | --- | --- |
+| `scripts/run-plugin-gates.sh .` | Every change | |
+| `npm ci && npm test` | Anything beyond documentation | |
+| Screenshot and interaction notes | Visible changes | |
 
-**If this changes anything visible, say whether you rendered it.**
-`omarchy-plugin-validate` and `qmllint` are static: they cannot see a QML
-contract error, a missing export, or a shell string that the engine rejects.
-Only loading the plugin proves it loads.
+Contributors do not need access to the private Buzz rig. After code review, a
+maintainer runs `scripts/rig-verify.sh` and `scripts/rig-render.sh` for
+applicable changes. Do not edit `.rig-proof.json`, `.render-proof.json`,
+`preview.png`, or files under `scripts/gates/`.
 
 ## Risk
 
