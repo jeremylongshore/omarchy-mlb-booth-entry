@@ -102,7 +102,7 @@ during a live game. Built from
 
 These plugins are growing, and we are looking for dependable Omarchy users who
 want to review issues, test releases, and keep a plugin healthy over time. Start
-with a small pull request or [open a maintainer interest issue](../../issues/new?template=maintainer_interest.md&title=Maintainer%20interest%3A%20)
+with a small pull request or [open a maintainer interest issue](https://github.com/jeremylongshore/omarchy-mlb-booth-entry/issues/new?template=maintainer_interest.md&title=Maintainer%20interest%3A%20)
 titled **Maintainer interest**. Tell us which plugin you use and how you want to
 help. Consistent contributors can earn maintainer responsibility.
 
