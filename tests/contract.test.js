@@ -35,7 +35,13 @@ test("render tooling requires exact 1280x720 provenance and approval", () => {
   assert.match(render, /export PATH=.*e2e\/bin/)
   assert.match(render, /rawShellLogSha256/)
   assert.match(render, /visualInspection:\{status:"pending"/)
+  assert.match(render, /rig-after-open\.sh/)
   assert.match(read("scripts/approve-preview.sh"), /product value is visible without reading the README/)
+  const afterOpen = read("e2e/rig-after-open.sh")
+  assert.match(afterOpen, /ipc call "\$MOD" settings/)
+  assert.match(afterOpen, /schedule standings gumbo/)
+  assert.match(afterOpen, /while \[ "\$attempt" -lt 12 \]/)
+  assert.ok(fs.statSync(path.join(root, "e2e/rig-after-open.sh")).mode & 0o111, "rig-after-open.sh must be executable")
 })
 
 test("render fixture tells the complete live baseball story without network access", () => {
@@ -54,7 +60,10 @@ test("render fixture tells the complete live baseball story without network acce
   assert.equal(gumbo.liveData.linescore.currentInning, 7)
   assert.equal(gumbo.liveData.plays.currentPlay.count.strikes, 2)
   assert.match(gumbo.liveData.plays.allPlays[0].result.description, /scoring/)
-  assert.match(read("e2e/rig-before-capture.sh"), /schedule standings gumbo/)
+  const captureGuard = read("e2e/rig-before-capture.sh")
+  assert.match(captureGuard, /schedule standings/)
+  assert.match(captureGuard, /while \[ "\$attempt" -lt 12 \]/)
+  assert.match(captureGuard, /exit 1/)
 
   assert.throws(() => run("https://example.com/not-the-mlb-api"), /Command failed/)
 })
@@ -69,6 +78,11 @@ test("tracked source contains no unresolved merge-conflict markers", () => {
     if (body.includes(0)) continue
     assert.doesNotMatch(body.toString("utf8"), /^(?:<{7}|={7}|>{7})(?: |$)/m, file)
   }
+})
+
+test("a live schedule response starts the first GUMBO fetch immediately", () => {
+  const panel = read("Panel.qml")
+  assert.match(panel, /root\.games = parsed[\s\S]*root\.scheduleLoaded = true[\s\S]*Qt\.callLater\(root\.liveTick\)/)
 })
 
 test("CI pins actions and runs every local quality gate", () => {

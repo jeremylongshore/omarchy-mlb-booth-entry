@@ -149,6 +149,12 @@ fi
 
 qs -p /root/omarchy/shell ipc call "\$MOD" toggle >/dev/null 2>&1
 sleep 8
+AFTER_OPEN=\$PLUGIN_DIR/e2e/rig-after-open.sh
+if [ -f "\$AFTER_OPEN" ]; then
+  [ -x "\$AFTER_OPEN" ] || { echo "rig-render: e2e/rig-after-open.sh is not executable" >&2; exit 1; }
+  "\$AFTER_OPEN"
+  sleep 4
+fi
 [ -d "/proc/\$QS_PID" ] || { echo "rig-render: isolated Quickshell exited after IPC" >&2; tail -80 "\$QS_LOG" >&2; exit 1; }
 
 echo "===QML WARNINGS==="

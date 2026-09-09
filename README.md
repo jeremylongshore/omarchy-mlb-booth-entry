@@ -22,7 +22,9 @@ omarchy plugin add https://github.com/jeremylongshore/omarchy-mlb-booth-entry --
 ```
 
 Then add **MLB Booth** to your bar layout (Omarchy menu, Bar, or
-`~/.config/omarchy/shell.json`) and pick your team in its settings.
+`~/.config/omarchy/shell.json`). Open the pill and click the gear, or
+right-click the pill, to pick your club and 12-hour or 24-hour first-pitch
+times.
 
 ## Remove
 
@@ -64,15 +66,34 @@ renders game one's innings. How network input is contained is in
 
 ## Settings
 
-One setting matters: **Team**, an enum of the 30 club abbreviations.
+Click the gear in the popup, right-click the pill, or press `s` with the
+panel open, for the two choices a user owns:
 
-The Booth takes three more values, and three is the floor for
-bring-your-own-key: which server, which model, which key. They are not in
-the settings form; set them on the widget's entry in
-`~/.config/omarchy/shell.json`:
+- **Team**: any of the 30 club abbreviations
+- **First pitch**: 12-hour or 24-hour wall clocks on the schedule and tooltip
+
+While settings are open the usual panel keys apply: `h` `j` `k` `l` or
+arrows move, Enter or Space selects, Escape goes back to the game panel.
+Save and Cancel are on the same cursor. The owner-runnable IPC is
+`omarchy-shell io.github.jeremylongshore.mlb-booth settings`.
+
+The live pill still counts down as a duration (`1h 05m`); the clock format
+only changes printed first-pitch times. Default is 24-hour, so existing
+installs do not change until you pick 12-hour.
+
+Save writes the same widget entry in `~/.config/omarchy/shell.json`. Do not
+add a second layout object with the same id; that puts two pills on the bar.
 
 ```json
-{ "id": "io.github.jeremylongshore.mlb-booth", "team": "ATL",
+{ "id": "io.github.jeremylongshore.mlb-booth", "team": "PIT", "timeFormat": "12h" }
+```
+
+The Booth recap takes three more values, and three is the floor for
+bring-your-own-key: which server, which model, which key. They are not in
+the settings form; set them on the same widget entry:
+
+```json
+{ "id": "io.github.jeremylongshore.mlb-booth", "team": "ATL", "timeFormat": "24h",
   "aiBaseUrl": "https://api.openai.com/v1", "aiModel": "gpt-4o-mini",
   "aiApiKey": "sk-..." }
 ```

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.jeremylongshore.mlb-booth",
   "name": "MLB Booth",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Jeremy Longshore",
   "license": "MIT",
   "description": "MLB Booth makes your chosen club legible at a glance: first-pitch countdowns before games, then score and inning, count, outs, bases, and last play while live. Panel: local schedule, division race, and line score. It reads the keyless MLB Stats API: schedule and standings every 15 minutes, Gameday every 20 seconds only during a game. MLB requests use the selected club and public game data, not an account or identifying data. Optional bring-your-own-key recaps are off by default and post nothing.",
@@ -25,6 +25,7 @@
     "allowMultiple": false,
     "defaults": {
       "team": "ATL",
+      "timeFormat": "24h",
       "aiBaseUrl": "",
       "aiModel": "",
       "aiApiKey": ""
@@ -40,6 +41,13 @@
           "PHI", "PIT", "SD", "SEA", "SF", "STL", "TB", "TEX", "TOR", "WSH"
         ],
         "defaultValue": "ATL"
+      },
+      {
+        "key": "timeFormat",
+        "type": "enum",
+        "label": "First pitch",
+        "options": ["12h", "24h"],
+        "defaultValue": "24h"
       }
     ]
   }
