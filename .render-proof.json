@@ -1,27 +1,27 @@
 {
-  "fingerprint": "f1db3dc2d1d392b455cd644a63bd1e41966e56142f32ade47c292a5e13c9d614",
-  "sourceCommit": "a42632e3a0c1f334d09c9c6f39650ffad99bb250",
+  "fingerprint": "8efe3fc019bfaf2bab1d063c98d66eec76dc23772c0e76c1b7eea243316059ff",
+  "sourceCommit": "3a0a52b5a6d65478613f33d05c3da19fd4fd0e0f",
   "sourceDirty": false,
-  "sourcePackageSha256": "661782d6d1b2a2e8addcde86623e1ce6579fde6cda1c641fe9cadaa541e4f024",
-  "remotePackageSha256": "661782d6d1b2a2e8addcde86623e1ce6579fde6cda1c641fe9cadaa541e4f024",
+  "sourcePackageSha256": "3d358392919442496d487a71f7618b85fa25bb0b5aba1b70ef597b93def35c6a",
+  "remotePackageSha256": "3d358392919442496d487a71f7618b85fa25bb0b5aba1b70ef597b93def35c6a",
   "rig": "intent-ops-buzz/omarchy-rig",
-  "runId": "mlb-booth-3891944",
-  "rawShellLogSha256": "a02e4a091e63646d3c0ec09270c27a3f8e15d0f8bc1bcaca58be16addc639830",
+  "runId": "mlb-booth-1604491",
+  "rawShellLogSha256": "b26a9eb08979c519a6160a7e05436fe92a28f8de07cb70c38de0875d4b51d0ac",
   "packageBoundary": "runtime tree; generated proof receipts, reports, tests, developer scripts, and marketplace preview excluded",
   "evidenceBoundary": "isolated real Omarchy shell and QML under a dedicated headless compositor; plugin-specific fixture hook when present; live plugin IPC toggle; direct full-frame grim capture with no crop or image post-processing",
   "visualInspection": {
     "status": "approved",
-    "previewSha256": "c43beb11ca2236d7b922504acce92a2c97772983dd2626a732fe2eaaa84bdf56",
+    "previewSha256": "67ad4f8fddb6b1115c0fc91cefd022bce54bc599a05b70ae8a78804d6a0b1094",
     "inspector": "jeremylongshore",
-    "inspectedAt": "2026-09-09T16:31:20Z",
+    "inspectedAt": "2026-09-20T20:33:24Z",
     "checks": [
       "product value visible at marketplace scale",
       "no primary content clipped",
       "plugin-specific visual identity"
     ]
   },
-  "previewSha256": "c43beb11ca2236d7b922504acce92a2c97772983dd2626a732fe2eaaa84bdf56",
+  "previewSha256": "67ad4f8fddb6b1115c0fc91cefd022bce54bc599a05b70ae8a78804d6a0b1094",
   "dimensions": "1280 x 720",
   "nonblackCoverage": 0.366146,
-  "capturedAt": "2026-09-09T16:31:04Z"
+  "capturedAt": "2026-09-20T20:11:24Z"
 }
