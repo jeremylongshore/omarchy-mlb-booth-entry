@@ -27,10 +27,29 @@ MOD="$(jq -r '.id // empty' "$TARGET/manifest.json")"
 NAME="${MOD##*.}"
 RUN_ID="${NAME}-$$"
 
+# List the files a fingerprint may cover, NUL-separated, as ./relative paths.
+#
+# At the root of a git work tree this is what git treats as part of the project:
+# tracked files plus untracked files that are not ignored. A bare `find` also
+# hashed ignored debris (nested node_modules, an ignored .beads Dolt store whose
+# JSON carries the exec bit), so a receipt written from a developer clone did not
+# describe the commit being submitted, and gates c37 and c43 (which list files
+# this same way since contributing-clanker#82) rejected it. On a clean checkout
+# both listings are identical, so existing receipts keep their fingerprint.
+# Outside a git root it falls back to the plain walk. Needs GNU find 4.9+.
+_fingerprint_candidates() {
+  if [[ "$(git rev-parse --show-toplevel 2>/dev/null)" == "$(pwd -P)" ]]; then
+    git ls-files -z --cached --others --exclude-standard 2>/dev/null | sed -z 's|^|./|'
+  else
+    find . -type f -not -path './.git/*' -print0 2>/dev/null
+  fi
+}
+
 fingerprint() {
   ( cd "$TARGET" && \
-    find . -type f \
-      -not -path './.git/*' -not -path './tests/*' \
+    _fingerprint_candidates \
+    | find -files0-from - -maxdepth 0 -type f \
+      -not -path './tests/*' \
       -not -path './scripts/*' -not -path './node_modules/*' \
       \( -path './e2e/*' -o -name '*.qml' -o -name '*.js' -o -name 'manifest.json' -o -perm -u+x \) \
       -print0 2>/dev/null \
