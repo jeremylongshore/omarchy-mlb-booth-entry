@@ -92,3 +92,14 @@ test("CI pins actions and runs every local quality gate", () => {
     assert.match(workflow, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))
   assert.match(workflow, /e2e\/bin\/\*/)
 })
+
+test("a stopped schedule fetch restarts from onExited, never from a running guess", () => {
+  const panel = read("Panel.qml")
+  // The restart used to be Qt.callLater guarded by `!scheduleProc.running`. A
+  // stopped process is still running until it has exited, so on a real network
+  // the guard was false and the restart was skipped: no schedule on first run.
+  const refresh = panel.slice(panel.indexOf("function refresh()"), panel.indexOf("function liveTick"))
+  assert.match(refresh, /root\.scheduleRestartPending = true\s*\n\s*scheduleProc\.running = false/)
+  assert.doesNotMatch(refresh, /Qt\.callLater/)
+  assert.match(panel, /id: scheduleProc\s*\n\s*onExited: function \(code\) \{[\s\S]*?root\.scheduleRestartPending = false[\s\S]*?scheduleProc\.running = true/)
+})
