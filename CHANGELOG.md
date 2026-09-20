@@ -12,6 +12,19 @@ Regenerate with `scripts/gen-changelog.sh`.
 
 Nothing yet.
 
+## [1.1.1] - 2026-09-20
+
+### Fixed
+
+- Load the schedule on first run. `refresh()` fires twice at startup; the second
+  call stopped the in-flight schedule fetch and queued a restart guarded by
+  `!scheduleProc.running`. A stopped process is still running until it has
+  exited, so on a real network the restart was skipped and there was no schedule
+  until the 15 minute timer came around. The restart now happens in the process's
+  own `onExited`. Found by running the plugin on the rig as a first-run user with
+  an empty cache and a live network; the fixture lane returns instantly and never
+  has a fetch in flight.
+
 ## [1.1.0] - 2026-09-04
 
 ### Added

@@ -37,6 +37,13 @@ Panel {
   readonly property int myTeamId: Model.teamId(teamAbbr)
   readonly property string timeFormat: hostReady ? Model.normalizedTimeFormat(setting("timeFormat", "24h")) : "24h"
   property int scheduleFetchTeamId: 0
+  // Set when refresh() had to stop an in-flight schedule fetch. The restart then
+  // happens in scheduleProc.onExited, the one moment the old process is known to
+  // be gone. It used to be a Qt.callLater guarded by `!scheduleProc.running`, but
+  // a stopped process is still `running` until it has actually exited, so on a
+  // real network the guard was false, the restart was skipped, and a first-run
+  // user had no schedule until the 15 minute timer came around.
+  property bool scheduleRestartPending: false
   property bool editingSettings: false
   readonly property string aiBaseUrl: String(setting("aiBaseUrl", ""))
   readonly property string aiModel: String(setting("aiModel", ""))
@@ -181,12 +188,10 @@ Panel {
     scheduleProc.command = curl("https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId="
       + root.scheduleFetchTeamId + "&hydrate=team,linescore&startDate=" + d0 + "&endDate=" + d1)
     if (scheduleProc.running) {
+      root.scheduleRestartPending = true
       scheduleProc.running = false
-      Qt.callLater(function() {
-        if (!root.hostReady || root.scheduleFetchTeamId !== root.myTeamId) return
-        if (!scheduleProc.running) scheduleProc.running = true
-      })
     } else {
+      root.scheduleRestartPending = false
       scheduleProc.running = true
     }
     var season = new Date(nowMs).toISOString().slice(0, 4)
@@ -266,6 +271,12 @@ Panel {
 
   Process {
     id: scheduleProc
+    onExited: function (code) {
+      if (!root.scheduleRestartPending) return
+      root.scheduleRestartPending = false
+      if (!root.hostReady || root.scheduleFetchTeamId !== root.myTeamId) return
+      scheduleProc.running = true
+    }
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
