@@ -1,27 +1,27 @@
 {
-  "fingerprint": "8efe3fc019bfaf2bab1d063c98d66eec76dc23772c0e76c1b7eea243316059ff",
-  "sourceCommit": "3a0a52b5a6d65478613f33d05c3da19fd4fd0e0f",
+  "fingerprint": "b724a5445e8dfb69baaab387d12280358b05d1575694285eded00cec1a6f4cba",
+  "sourceCommit": "32308bca3a74bd0af8c20b638db84eccfe10b3d8",
   "sourceDirty": false,
-  "sourcePackageSha256": "3d358392919442496d487a71f7618b85fa25bb0b5aba1b70ef597b93def35c6a",
-  "remotePackageSha256": "3d358392919442496d487a71f7618b85fa25bb0b5aba1b70ef597b93def35c6a",
+  "sourcePackageSha256": "7e5f44394b85bc200267f140adb0ef5545095040d373ba23d952395ae420d211",
+  "remotePackageSha256": "7e5f44394b85bc200267f140adb0ef5545095040d373ba23d952395ae420d211",
   "rig": "intent-ops-buzz/omarchy-rig",
-  "runId": "mlb-booth-1604491",
-  "rawShellLogSha256": "b26a9eb08979c519a6160a7e05436fe92a28f8de07cb70c38de0875d4b51d0ac",
+  "runId": "mlb-booth-146437",
+  "rawShellLogSha256": "9db73804577524874fe4f8e9174719d022ceb47d2fe9258b3351586a45fe11e7",
   "packageBoundary": "runtime tree; generated proof receipts, reports, tests, developer scripts, and marketplace preview excluded",
   "evidenceBoundary": "isolated real Omarchy shell and QML under a dedicated headless compositor; plugin-specific fixture hook when present; live plugin IPC toggle; direct full-frame grim capture with no crop or image post-processing",
   "visualInspection": {
     "status": "approved",
-    "previewSha256": "67ad4f8fddb6b1115c0fc91cefd022bce54bc599a05b70ae8a78804d6a0b1094",
-    "inspector": "jeremylongshore",
-    "inspectedAt": "2026-09-20T20:33:24Z",
+    "previewSha256": "0b89fc91616d0900e85d14be16d74a412c2027e505da2aec17d9d65d8c7ddc90",
+    "inspector": "Claude (agent) for jeremylongshore",
+    "inspectedAt": "2026-11-15T09:01:18Z",
     "checks": [
       "product value visible at marketplace scale",
       "no primary content clipped",
       "plugin-specific visual identity"
     ]
   },
-  "previewSha256": "67ad4f8fddb6b1115c0fc91cefd022bce54bc599a05b70ae8a78804d6a0b1094",
+  "previewSha256": "0b89fc91616d0900e85d14be16d74a412c2027e505da2aec17d9d65d8c7ddc90",
   "dimensions": "1280 x 720",
   "nonblackCoverage": 0.366146,
-  "capturedAt": "2026-09-20T20:11:24Z"
+  "capturedAt": "2026-11-15T09:01:05Z"
 }

@@ -1,6 +1,6 @@
 {
   "name": "omarchy-mlb-booth",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "private": true,
   "description": "MLB Booth widget for the Omarchy bar - dev harness for the Model.js data layer",
   "scripts": {

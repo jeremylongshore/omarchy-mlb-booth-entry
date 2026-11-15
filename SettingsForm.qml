@@ -1,5 +1,8 @@
 import QtQuick
 import qs.Commons
+// Qt 6.12 adds its own Color type, so Omarchy's palette singleton must be
+// qualified (docs/omarchy-shell.md, Theme tokens).
+import qs.Commons as Commons
 import qs.Ui
 import "Model.js" as Model
 
@@ -86,7 +89,7 @@ Column {
   }
 
   function focusColor() {
-    return root.bar ? root.bar.urgent : Color.urgent
+    return root.bar ? root.bar.urgent : Commons.Color.urgent
   }
 
   onVisibleChanged: if (visible) begin()
@@ -99,7 +102,7 @@ Column {
     text: "TEAM"
     textFormat: Text.PlainText
     elide: Text.ElideRight
-    color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Color.muted
+    color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Commons.Color.muted
     font.family: root.bar ? root.bar.fontFamily : Style.font.family
     font.pixelSize: Style.font.caption
     font.letterSpacing: 1
@@ -113,7 +116,7 @@ Column {
     text: Model.teamName(root.draftTeam)
     textFormat: Text.PlainText
     elide: Text.ElideRight
-    color: root.bar ? root.bar.foreground : Color.foreground
+    color: root.bar ? root.bar.foreground : Commons.Color.foreground
     font.family: root.bar ? root.bar.fontFamily : Style.font.family
     font.pixelSize: Style.font.title
     font.bold: true
@@ -143,7 +146,7 @@ Column {
         color: selected
           ? Qt.hsla(Model.clubHue(Model.teamName(abbr)), 0.62, 0.55, 0.28)
           : (chipArea.containsMouse
-            ? (root.bar ? Style.hoverFillFor(root.bar.foreground, Color.accent) : "#333")
+            ? (root.bar ? Style.hoverFillFor(root.bar.foreground, Commons.Color.accent) : "#333")
             : "transparent")
         border.width: focused ? 2 : (selected ? 1 : 0)
         border.color: focused
@@ -169,7 +172,7 @@ Column {
           text: abbr
           textFormat: Text.PlainText
           elide: Text.ElideRight
-          color: root.bar ? root.bar.foreground : Color.foreground
+          color: root.bar ? root.bar.foreground : Commons.Color.foreground
           font.family: root.bar ? root.bar.fontFamily : Style.font.family
           font.pixelSize: Style.font.bodySmall
           font.bold: selected
@@ -197,7 +200,7 @@ Column {
     text: "FIRST PITCH"
     textFormat: Text.PlainText
     elide: Text.ElideRight
-    color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Color.muted
+    color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Commons.Color.muted
     font.family: root.bar ? root.bar.fontFamily : Style.font.family
     font.pixelSize: Style.font.caption
     font.letterSpacing: 1
@@ -224,14 +227,14 @@ Column {
         height: Style.space(28)
         radius: Style.cornerRadius
         color: selected
-          ? (root.bar ? root.bar.foreground : Color.foreground)
+          ? (root.bar ? root.bar.foreground : Commons.Color.foreground)
           : (fmtArea.containsMouse
-            ? (root.bar ? Style.hoverFillFor(root.bar.foreground, Color.accent) : "#333")
+            ? (root.bar ? Style.hoverFillFor(root.bar.foreground, Commons.Color.accent) : "#333")
             : "transparent")
         border.width: focused ? 2 : (selected ? 0 : 1)
         border.color: focused
           ? root.focusColor()
-          : (root.bar ? root.bar.foreground : Color.foreground)
+          : (root.bar ? root.bar.foreground : Commons.Color.foreground)
         focus: focused
         activeFocusOnTab: true
 
@@ -253,8 +256,8 @@ Column {
           textFormat: Text.PlainText
           elide: Text.ElideRight
           color: selected
-            ? (root.bar ? root.bar.background : Color.background)
-            : (root.bar ? root.bar.foreground : Color.foreground)
+            ? (root.bar ? root.bar.background : Commons.Color.background)
+            : (root.bar ? root.bar.foreground : Commons.Color.foreground)
           font.family: root.bar ? root.bar.fontFamily : Style.font.family
           font.pixelSize: Style.font.bodySmall
           font.bold: selected
@@ -284,7 +287,7 @@ Column {
       width: Style.space(80)
       height: Style.space(30)
       radius: Style.cornerRadius
-      color: root.bar ? root.bar.foreground : Color.foreground
+      color: root.bar ? root.bar.foreground : Commons.Color.foreground
       border.width: focused ? 2 : 0
       border.color: root.focusColor()
       focus: focused
@@ -302,7 +305,7 @@ Column {
         text: "Save"
         textFormat: Text.PlainText
         elide: Text.ElideRight
-        color: root.bar ? root.bar.background : Color.background
+        color: root.bar ? root.bar.background : Commons.Color.background
         font.family: root.bar ? root.bar.fontFamily : Style.font.family
         font.pixelSize: Style.font.bodySmall
       }
@@ -324,7 +327,7 @@ Column {
       radius: Style.cornerRadius
       color: "transparent"
       border.width: focused ? 2 : 1
-      border.color: focused ? root.focusColor() : (root.bar ? root.bar.foreground : Color.foreground)
+      border.color: focused ? root.focusColor() : (root.bar ? root.bar.foreground : Commons.Color.foreground)
       focus: focused
       activeFocusOnTab: true
 
@@ -340,7 +343,7 @@ Column {
         text: "Cancel"
         textFormat: Text.PlainText
         elide: Text.ElideRight
-        color: root.bar ? root.bar.foreground : Color.foreground
+        color: root.bar ? root.bar.foreground : Commons.Color.foreground
         font.family: root.bar ? root.bar.fontFamily : Style.font.family
         font.pixelSize: Style.font.bodySmall
       }
