@@ -2,6 +2,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+// Qt 6.12 adds its own Color type, so Omarchy's palette singleton must be
+// qualified (docs/omarchy-shell.md, Theme tokens).
+import qs.Commons as Commons
 import qs.Ui
 import "Model.js" as Model
 
@@ -459,7 +462,7 @@ Panel {
               text: root.editingSettings ? "" : "MLB BOOTH"
               textFormat: Text.PlainText
               elide: Text.ElideRight
-              color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Color.muted
+              color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Commons.Color.muted
               font.family: root.bar ? root.bar.fontFamily : Style.font.family
               font.pixelSize: Style.font.caption
               font.letterSpacing: 1
@@ -474,7 +477,7 @@ Panel {
               height: Style.space(26)
               radius: Style.cornerRadius
               color: gearArea.containsMouse
-                ? (root.bar ? Style.hoverFillFor(root.bar.foreground, Color.accent) : "#333")
+                ? (root.bar ? Style.hoverFillFor(root.bar.foreground, Commons.Color.accent) : "#333")
                 : "transparent"
               activeFocusOnTab: true
 
@@ -490,7 +493,7 @@ Panel {
                 text: root.editingSettings ? String.fromCharCode(0x00d7) : String.fromCharCode(0xf013)
                 textFormat: Text.PlainText
                 elide: Text.ElideRight
-                color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Color.muted
+                color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Commons.Color.muted
                 font.family: root.bar ? root.bar.fontFamily : Style.font.family
                 font.pixelSize: root.editingSettings ? Style.font.title : Style.font.body
               }
@@ -543,7 +546,7 @@ Panel {
                 // width is the frame this must stay inside.
                 width: heroCol.width
                 elide: Text.ElideRight
-                color: root.bar ? root.bar.foreground : Color.foreground
+                color: root.bar ? root.bar.foreground : Commons.Color.foreground
                 font.family: root.bar ? root.bar.fontFamily : Style.font.family
                 font.pixelSize: Style.font.title
                 font.bold: true
@@ -560,7 +563,7 @@ Panel {
                 textFormat: Text.PlainText
                 width: heroCol.width
                 elide: Text.ElideRight
-                color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Color.muted
+                color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Commons.Color.muted
                 font.family: root.bar ? root.bar.fontFamily : Style.font.family
                 font.pixelSize: Style.font.caption
                 font.letterSpacing: 1
@@ -576,14 +579,14 @@ Panel {
                   height: liveText.implicitHeight + Style.space(4)
                   anchors.verticalCenter: parent.verticalCenter
                   radius: Style.cornerRadius
-                  color: root.bar ? root.bar.urgent : Color.urgent
+                  color: root.bar ? root.bar.urgent : Commons.Color.urgent
 
                   Text {
                     id: liveText
                     anchors.centerIn: parent
                     text: "● LIVE"
                     textFormat: Text.PlainText
-                    color: root.bar ? root.bar.background : Color.background
+                    color: root.bar ? root.bar.background : Commons.Color.background
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.caption
                     font.bold: true
@@ -609,7 +612,7 @@ Panel {
                   width: Math.min(implicitWidth, heroCol.width)
                   elide: Text.ElideRight
                   textFormat: Text.PlainText
-                  color: root.bar ? root.bar.foreground : Color.foreground
+                  color: root.bar ? root.bar.foreground : Commons.Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.display
                   font.bold: root.isLive
@@ -624,12 +627,12 @@ Panel {
             width: parent.width
             spacing: Style.space(2)
 
-            PanelSeparator { foreground: root.bar ? root.bar.foreground : Color.foreground }
+            PanelSeparator { foreground: root.bar ? root.bar.foreground : Commons.Color.foreground }
 
             PanelSectionHeader {
               text: "LINE SCORE"
               leftPadding: Style.space(16)
-              foreground: root.bar ? root.bar.foreground : Color.foreground
+              foreground: root.bar ? root.bar.foreground : Commons.Color.foreground
               fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
             }
 
@@ -645,7 +648,7 @@ Panel {
                 Text {
                   text: " "
                   textFormat: Text.PlainText
-                  color: root.bar ? root.bar.foreground : Color.foreground
+                  color: root.bar ? root.bar.foreground : Commons.Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
                 }
@@ -654,7 +657,7 @@ Panel {
                   textFormat: Text.PlainText
                   width: Style.space(28)
                   elide: Text.ElideRight
-                  color: root.bar ? root.bar.foreground : Color.foreground
+                  color: root.bar ? root.bar.foreground : Commons.Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
                   font.bold: true
@@ -664,7 +667,7 @@ Panel {
                   textFormat: Text.PlainText
                   width: Style.space(28)
                   elide: Text.ElideRight
-                  color: root.bar ? root.bar.foreground : Color.foreground
+                  color: root.bar ? root.bar.foreground : Commons.Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
                   font.bold: true
@@ -686,7 +689,7 @@ Panel {
                     textFormat: Text.PlainText
                     width: Style.space(16)
                     elide: Text.ElideRight
-                    color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Color.muted
+                    color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Commons.Color.muted
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.bodySmall
                   }
@@ -695,7 +698,7 @@ Panel {
                     textFormat: Text.PlainText
                     width: Style.space(16)
                     elide: Text.ElideRight
-                    color: root.bar ? root.bar.foreground : Color.foreground
+                    color: root.bar ? root.bar.foreground : Commons.Color.foreground
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.bodySmall
                   }
@@ -704,7 +707,7 @@ Panel {
                     textFormat: Text.PlainText
                     width: Style.space(16)
                     elide: Text.ElideRight
-                    color: root.bar ? root.bar.foreground : Color.foreground
+                    color: root.bar ? root.bar.foreground : Commons.Color.foreground
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.bodySmall
                   }
@@ -716,7 +719,7 @@ Panel {
                 Text {
                   text: "R H E"
                   textFormat: Text.PlainText
-                  color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Color.muted
+                  color: root.bar ? Qt.darker(root.bar.foreground, 1.4) : Commons.Color.muted
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
                 }
@@ -725,7 +728,7 @@ Panel {
                   textFormat: Text.PlainText
                   width: Style.space(56)
                   elide: Text.ElideRight
-                  color: root.bar ? root.bar.foreground : Color.foreground
+                  color: root.bar ? root.bar.foreground : Commons.Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
                   font.bold: true
@@ -735,7 +738,7 @@ Panel {
                   textFormat: Text.PlainText
                   width: Style.space(56)
                   elide: Text.ElideRight
-                  color: root.bar ? root.bar.foreground : Color.foreground
+                  color: root.bar ? root.bar.foreground : Commons.Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
                   font.bold: true
@@ -754,7 +757,7 @@ Panel {
                 + root.gumbo.outs + " out · On base: " + Model.basesText(root.gumbo.bases)
               textFormat: Text.PlainText
               wrapMode: Text.WordWrap
-              color: root.bar ? root.bar.foreground : Color.foreground
+              color: root.bar ? root.bar.foreground : Commons.Color.foreground
               font.family: root.bar ? root.bar.fontFamily : Style.font.family
               font.pixelSize: Style.font.body
             }
@@ -768,7 +771,7 @@ Panel {
               text: "At bat: " + root.gumbo.batter + " · Pitching: " + root.gumbo.pitcher
               textFormat: Text.PlainText
               wrapMode: Text.WordWrap
-              color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Color.muted
+              color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Commons.Color.muted
               font.family: root.bar ? root.bar.fontFamily : Style.font.family
               font.pixelSize: Style.font.bodySmall
             }
@@ -782,7 +785,7 @@ Panel {
               text: "Last play: " + root.gumbo.lastPlay
               textFormat: Text.PlainText
               wrapMode: Text.WordWrap
-              color: root.bar ? Qt.darker(root.bar.foreground, 1.2) : Color.muted
+              color: root.bar ? Qt.darker(root.bar.foreground, 1.2) : Commons.Color.muted
               font.family: root.bar ? root.bar.fontFamily : Style.font.family
               font.pixelSize: Style.font.bodySmall
             }
@@ -794,12 +797,12 @@ Panel {
             width: parent.width
             spacing: Style.space(2)
 
-            PanelSeparator { foreground: root.bar ? root.bar.foreground : Color.foreground }
+            PanelSeparator { foreground: root.bar ? root.bar.foreground : Commons.Color.foreground }
 
             PanelSectionHeader {
               text: "THE BOOTH"
               leftPadding: Style.space(16)
-              foreground: root.bar ? root.bar.foreground : Color.foreground
+              foreground: root.bar ? root.bar.foreground : Commons.Color.foreground
               fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
             }
 
@@ -811,7 +814,7 @@ Panel {
               text: root.recapText
               textFormat: Text.PlainText
               wrapMode: Text.WordWrap
-              color: root.bar ? root.bar.foreground : Color.foreground
+              color: root.bar ? root.bar.foreground : Commons.Color.foreground
               font.family: root.bar ? root.bar.fontFamily : Style.font.family
               font.pixelSize: Style.font.body
             }
@@ -823,12 +826,12 @@ Panel {
             width: parent.width
             spacing: Style.space(2)
 
-            PanelSeparator { foreground: root.bar ? root.bar.foreground : Color.foreground }
+            PanelSeparator { foreground: root.bar ? root.bar.foreground : Commons.Color.foreground }
 
             PanelSectionHeader {
               text: "SCHEDULE · LOCAL TIME"
               leftPadding: Style.space(16)
-              foreground: root.bar ? root.bar.foreground : Color.foreground
+              foreground: root.bar ? root.bar.foreground : Commons.Color.foreground
               fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
             }
 
@@ -851,7 +854,7 @@ Panel {
 
                 Rectangle {
                   anchors.fill: parent
-                  color: root.bar ? root.bar.foreground : Color.foreground
+                  color: root.bar ? root.bar.foreground : Commons.Color.foreground
                   opacity: index % 2 === 0 ? 0.035 : 0.0
                 }
 
@@ -879,7 +882,7 @@ Panel {
                   text: (modelData.isHome ? "vs " : "@ ")
                     + (modelData.isHome ? modelData.away.name : modelData.home.name)
                   textFormat: Text.PlainText
-                  color: root.bar ? root.bar.foreground : Color.foreground
+                  color: root.bar ? root.bar.foreground : Commons.Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.body
                 }
@@ -895,7 +898,7 @@ Panel {
                   text: Qt.formatDateTime(new Date(modelData.startMs),
                     Model.wallClockFormat(root.timeFormat, "schedule"))
                   textFormat: Text.PlainText
-                  color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Color.muted
+                  color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Commons.Color.muted
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.body
                 }
@@ -909,12 +912,12 @@ Panel {
             width: parent.width
             spacing: Style.space(2)
 
-            PanelSeparator { foreground: root.bar ? root.bar.foreground : Color.foreground }
+            PanelSeparator { foreground: root.bar ? root.bar.foreground : Commons.Color.foreground }
 
             PanelSectionHeader {
               text: root.standings.division.toUpperCase()
               leftPadding: Style.space(16)
-              foreground: root.bar ? root.bar.foreground : Color.foreground
+              foreground: root.bar ? root.bar.foreground : Commons.Color.foreground
               fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
             }
 
@@ -932,7 +935,7 @@ Panel {
                   anchors.fill: parent
                   color: isMine
                     ? Qt.hsla(Model.clubHue(modelData.name), 0.62, 0.55, 1.0)
-                    : (root.bar ? root.bar.foreground : Color.foreground)
+                    : (root.bar ? root.bar.foreground : Commons.Color.foreground)
                   opacity: isMine ? 0.10 : (index % 2 === 0 ? 0.035 : 0.0)
                 }
 
@@ -958,7 +961,7 @@ Panel {
                   anchors.verticalCenter: parent.verticalCenter
                   text: modelData.rank + "  " + modelData.name
                   textFormat: Text.PlainText
-                  color: root.bar ? root.bar.foreground : Color.foreground
+                  color: root.bar ? root.bar.foreground : Commons.Color.foreground
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
                   font.bold: isMine
@@ -978,7 +981,7 @@ Panel {
                   horizontalAlignment: Text.AlignRight
                   text: modelData.wins + "-" + modelData.losses
                   textFormat: Text.PlainText
-                  color: root.bar ? Qt.darker(root.bar.foreground, isMine ? 1.0 : 1.3) : Color.muted
+                  color: root.bar ? Qt.darker(root.bar.foreground, isMine ? 1.0 : 1.3) : Commons.Color.muted
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
                   font.bold: isMine
@@ -993,7 +996,7 @@ Panel {
                   horizontalAlignment: Text.AlignRight
                   text: modelData.gb === "-" ? "" : modelData.gb + " back"
                   textFormat: Text.PlainText
-                  color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Color.muted
+                  color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Commons.Color.muted
                   font.family: root.bar ? root.bar.fontFamily : Style.font.family
                   font.pixelSize: Style.font.bodySmall
                 }

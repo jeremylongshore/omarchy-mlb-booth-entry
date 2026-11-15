@@ -104,6 +104,16 @@ mkdir -p "\$RUNTIME" "\$PLUGIN_DIR"
 chmod 700 "\$RUNTIME" "\$RIG_ROOT" "\$RIG_ROOT/.config" \
   "\$RIG_ROOT/.config/omarchy" "\$RIG_ROOT/.config/omarchy/plugins" "\$PLUGIN_DIR"
 tar xzf /tmp/rigrender-\$RUN_ID.tgz -C "\$PLUGIN_DIR"
+# A real Omarchy install always has a current theme. Seed the state
+# omarchy-theme-set writes (current/theme, theme.name, background) with the stock
+# tokyo-night theme: current first-party shell plugins (image-picker, lock) read
+# it from HOME/.local/state and log QML warnings when it is missing, which would
+# otherwise read here as plugin warnings.
+CURRENT="\$RIG_ROOT/.local/state/omarchy/current"
+mkdir -p "\$CURRENT"
+ln -nsf /root/omarchy/themes/tokyo-night "\$CURRENT/theme"
+printf 'tokyo-night\n' > "\$CURRENT/theme.name"
+ln -nsf "\$CURRENT/theme/backgrounds/0-liftoff.webp" "\$CURRENT/background"
 
 cat > "\$SWAY_CONFIG" <<SWAY
 output * resolution \$RES scale \$SCALE
